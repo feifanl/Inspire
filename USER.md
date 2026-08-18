@@ -16,6 +16,8 @@ This file lists every keybind and every setting.
 | `[` | Previous board | Pins wall (one-board mode) |
 | `]` | Next board | Pins wall (one-board mode) |
 | `B` | Open the notes board | Anywhere |
+| `Enter` | Save the layout | Layout move mode |
+| `Esc` | Discard layout changes | Layout move mode |
 | `Enter` | Add the typed task | Todo input |
 | `Enter` | Run the web search | Search bar |
 | `Esc` | Close the open overlay or settings panel | Notes board, settings |
@@ -29,7 +31,8 @@ You never *need* the keyboard.
 - **Life clock:** the `-` / `+` zoom buttons, or click any view name in the breadcrumb (`day, week, month, year, decade, life`) to jump to it.
 - **Pins:** a chevron tab (top-right) opens the board switcher (`<` name `>`); `[` / `]` also cycle boards. Drag a pin to move it; a plain click opens its link.
 - **Notes:** `+ note` opens the composer; the `>` arrow button (with a count badge) opens the board. You can also drag a freshly-saved note toast to the right to open the board.
-- **Collapse tabs:** the quote, todo, and life-clock panels each have a small arrow tab to hide or show them.
+- **Collapse tabs:** the quote, todo, and life-clock panels each have a small arrow tab to hide or show them. The arrow points down while the panel is put away and up to fold it back.
+- **Move panels:** the pencil button (bottom-right, left of `?`) opens move mode. It works one panel at a time: every other panel, icon, and corner button disappears, the toolbar names the panel you're moving (`Quote · 1/3`), and the `‹` `›` buttons step to the previous/next panel. The quote and the task list show labelled zones — click one and the panel moves there. The search bar instead slides along a line down the middle of the screen: drag the bar itself, or click anywhere on the line. Nothing is saved until you press the green check; the red × (or `Esc`, or opening anything else) throws the changes away.
 - **Settings:** the gear button (bottom-left). Its header holds the theme and liquid-glass toggles.
 - **Help:** the `?` button (bottom-right) opens this guide.
 
@@ -73,6 +76,8 @@ With all three creds set, cards in the list show up locally, adding a task creat
 - **Show quote** - on by default.
 - **Fetch daily quote online** - on by default. Pulls ZenQuotes' quote of the day. Off means bundled offline quotes only.
 - **Offline categories** - Philosophy, Self-help, Morality, all on by default. They filter the bundled offline pool used when the API is off or unreachable. Turn all three off (with the API off) to hide the card.
+- **My quotes** - write your own. Each row is a quote plus an optional author; blank rows are ignored. They join the rotation and take every third pick (and every third day's quote), so a short list still shows up regularly. Your quotes are tagged `yours` on the card.
+- **Show only my quotes** - off by default. On, the bundled pool and the online fetch are skipped entirely. While your list is empty it falls back to the bundled quotes, so the card is never blank.
 
 ### Pins
 
@@ -89,14 +94,23 @@ With all three creds set, cards in the list show up locally, adding a task creat
 
 ### Search
 
-- **Show search bar** - on by default. A glass pill above the life clock, focused on a fresh tab. Type and press `Enter`.
+- **Show search bar** - on by default. A glass pill above the life clock, focused on a fresh tab. Type and press `Enter`. Its height on screen is free — see **Layout** below, or drag it in move mode.
 - **Search engine** - Google, DuckDuckGo, Brave, or Bing. Defaults to Google.
 
 ### Notes
 
 - **Show notes** - on by default. Off hides the corner buttons.
 
-Notes are sticky-note paper in five colors (green, yellow, blue, red, gray). Pick a color in the composer and the paper matches. Deleting a note peels it off the board. Notes stick around forever and cap at 500 characters each.
+Notes are sticky-note paper in five colors (green, yellow, blue, red, gray). Pick a color in the composer and the paper matches. Deleting a note peels it off the board. Notes stick around forever and cap at 500 characters each. A long note keeps its card size and scrolls inside it, so it never splits across two columns of the board.
+
+### Layout
+
+- **Quote position** - Top, Center, or Bottom. Defaults to Bottom. Center puts the quote in the middle column, under the life clock.
+- **Tasks side** - Left or Right edge. Defaults to Left. The collapse arrows and the pins board switcher flip with it.
+- **Search bar height (%)** - how far down the screen the search bar hangs, 5 to 94. Blank (the default) keeps it in the centre column above the life clock. It stays horizontally centered either way.
+- **Hide collapsed handles** - off by default. On, the tab or handle a collapsed panel leaves behind (quote tab, tasks handle, life-clock pill) fades out of sight. It stays exactly where it was and still works: bring the cursor anywhere near it and it fades back in, brightening as you get closer, so you never have to hunt for the exact pixel.
+
+All three are also settable from the pencil button (bottom-right), which is usually easier: move the panels on the page, then press the green check to keep it.
 
 ---
 

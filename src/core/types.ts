@@ -64,6 +64,9 @@ export interface DashboardModule {
 // ---------- Settings (single typed schema, root storage key "settings") ----------
 export type LifeView = 'day' | 'week' | 'month' | 'year' | 'decade' | 'life';
 export type SearchEngine = 'google' | 'duckduckgo' | 'brave' | 'bing';
+// Placements the layout editor can drop a panel into.
+export type QuotePos = 'top' | 'center' | 'bottom';
+export type SideLR = 'left' | 'right';
 
 export interface Settings {
   version: 1; // migration guard
@@ -91,6 +94,8 @@ export interface Settings {
     enabled: boolean;
     api: boolean; // fetch ZenQuotes online; false = bundled only
     categories: QuoteCategory[]; // filters the offline fallback pool; default all three
+    custom: CustomQuote[]; // the user's own quotes, mixed into the offline pool
+    customOnly: boolean; // show ONLY the user's quotes (no bundled pool, no API)
   };
   pins: {
     enabled: boolean;
@@ -109,6 +114,11 @@ export interface Settings {
   notes: {
     enabled: boolean;
   };
+  layout: {
+    quotePos: QuotePos; // where the quote dock sits ('center' = in the column, under the clock)
+    todoSide: SideLR; // which edge the tasks sidebar is pinned to
+    searchY: number | null; // search bar centre, % down the screen; null = in the column
+  };
   search: {
     enabled: boolean;
     engine: SearchEngine;
@@ -119,6 +129,7 @@ export interface Settings {
     clockMinimized: boolean; // life clock collapsed to a compact pill
     pinsBoardsOpen: boolean; // board switcher expanded from its top-right tab
     glass: boolean; // liquid-glass surfaces (false = flat opaque)
+    hideCollapsed: boolean; // fade out the tab/handle a collapsed panel leaves behind
   };
 }
 
@@ -128,7 +139,13 @@ export const DEFAULT_SETTINGS: Settings = {
   lifeclock: { birthday: null, lifeExpectancyYears: 80, defaultView: 'month' },
   wallpaper: { mode: 'color', color: '#0d1117', url: '', dim: 0.35 },
   todo: { trelloEnabled: false, trelloKey: '', trelloToken: '', trelloListId: '', trelloBoardId: '', trelloAutoWeekday: false },
-  quote: { enabled: true, api: true, categories: ['philosophy', 'self-help', 'morality'] },
+  quote: {
+    enabled: true,
+    api: true,
+    categories: ['philosophy', 'self-help', 'morality'],
+    custom: [],
+    customOnly: false,
+  },
   pins: {
     enabled: false,
     boards: [],
@@ -144,8 +161,9 @@ export const DEFAULT_SETTINGS: Settings = {
     screenScrollSeconds: 100,
   },
   notes: { enabled: true },
+  layout: { quotePos: 'bottom', todoSide: 'left', searchY: null },
   search: { enabled: true, engine: 'google' },
-  ui: { quoteOpen: false, todoHidden: false, clockMinimized: false, pinsBoardsOpen: false, glass: true },
+  ui: { quoteOpen: false, todoHidden: false, clockMinimized: false, pinsBoardsOpen: false, glass: true, hideCollapsed: false },
 };
 
 // ---------- Todo (root storage key "todos") ----------
@@ -175,6 +193,13 @@ export interface Quote {
   text: string;
   author: string;
   category?: QuoteCategory; // absent for API-sourced quotes (ZenQuotes has no category)
+  own?: true; // written by the user (settings.quote.custom), not bundled/fetched
+}
+
+// One row of the "my quotes" settings list. Author may be blank.
+export interface CustomQuote {
+  text: string;
+  author: string;
 }
 
 // ---------- Pins ----------

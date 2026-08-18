@@ -1,0 +1,369 @@
+/* Panel placements + the layout editor.
+   Placement is data-driven: applyLayout() (modules/layout/index.ts) writes the
+   layout onto <html> as data-quote-pos / data-todo-side / --search-y, and the
+   rules below move the panels. Loaded after base.css, so these overrides win
+   without !important. */
+
+/* ---- quote dock: top / center / bottom (base.css ships the bottom default) ---- */
+:root[data-quote-pos='top'] .mod-quote {
+  top: var(--s-5);
+  bottom: auto;
+}
+/* Top dock: the centered column starts below the quote instead of above it. */
+:root[data-quote-pos='top'] .layout {
+  padding-top: var(--quote-reserve);
+  padding-bottom: var(--s-6);
+}
+/* Center: drop out of the fixed dock and flow inside the column, under the clock. */
+:root[data-quote-pos='center'] .mod-quote {
+  position: static;
+  transform: none;
+  width: auto;
+}
+:root[data-quote-pos='center'] .layout {
+  padding-bottom: var(--s-6);
+}
+
+/* ---- tasks sidebar: left (default) / right ---- */
+:root[data-todo-side='right'] .slot-sidebar {
+  left: auto;
+  right: var(--s-5);
+}
+/* Mirror the pins board switcher out of the sidebar's way. */
+:root[data-todo-side='right'] .pins-boards {
+  right: auto;
+  left: var(--s-5);
+  flex-direction: row-reverse;
+}
+/* The collapsed handle hugs the edge the sidebar is pinned to. */
+:root[data-todo-side='right'] .todo-handle {
+  align-self: flex-end;
+}
+
+/* ---- search bar: free height on the centre line ----
+   Default (no data-search-pos) leaves it in the column above the life clock.
+   Placed by hand, it lifts out of the flow and hangs at --search-y, measured
+   down the screen from the top; x stays pinned to the centre. */
+:root[data-search-pos='free'] .mod-search {
+  position: fixed;
+  left: 50%;
+  top: var(--search-y, 12%);
+  transform: translate(-50%, -50%);
+  width: min(var(--content-w), calc(100vw / var(--z, 1) - 2 * var(--s-5)));
+  z-index: 4;
+}
+
+/* ---- edit mode: only the panel being moved stays on screen ----
+   Every panel and every corner control goes invisible — life clock, notes
+   buttons, gear, help, pins switcher, and the two movable panels that aren't
+   the subject. .le-movable (the focused one) fades back in, and the wallpaper
+   dims behind it, so the zones read against a quiet page. The editor's own
+   controls live in .layout-btns / .layout-edit and are never touched.
+   Opacity, not display: the editor measures the panels to build its cycle. */
+:root[data-edit='on'] .mod-quote,
+:root[data-edit='on'] .mod-todo,
+:root[data-edit='on'] .mod-search,
+:root[data-edit='on'] .mod-lifeclock,
+:root[data-edit='on'] .slot-corner,
+:root[data-edit='on'] .pins-boards,
+:root[data-edit='on'] .help-btn {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--t-med);
+}
+:root[data-edit='on'] .le-movable {
+  opacity: 1;
+  pointer-events: auto;
+}
+:root[data-edit='on'] .slot-background {
+  opacity: 0.5;
+  transition: opacity var(--t-med);
+}
+
+.le-movable {
+  outline: 2px dashed var(--primary);
+  outline-offset: 6px;
+  border-radius: var(--r-lg);
+  pointer-events: auto; /* the search bar is dragged by its own box */
+}
+/* Inert while it's the subject: a click must not cycle the quote, tick a task,
+   or focus the search input. */
+.le-movable > * {
+  pointer-events: none;
+}
+.mod-search.le-movable {
+  cursor: grab;
+}
+.mod-search.le-movable.le-sliding {
+  cursor: grabbing;
+}
+
+/* ---- editor overlay ---- */
+.layout-edit {
+  --le-zone-h: 80px; /* also sets where the toolbar clears the bottom zone */
+  position: fixed;
+  inset: 0;
+  z-index: 9; /* over the panels, under .slot-overlay's buttons and modals */
+  pointer-events: none; /* only the bar, zones and track catch input */
+  opacity: 0;
+  transition: opacity var(--t-med);
+}
+.layout-edit.open {
+  opacity: 1;
+}
+
+/* Rides just above the bottom quote zone so it never covers a target. */
+.le-bar {
+  position: absolute;
+  bottom: calc(var(--s-5) + var(--le-zone-h) + var(--s-3));
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-2) var(--s-4);
+  font-size: var(--fs-sm);
+  border-radius: var(--r-md);
+  background: var(--glass-bg-strong);
+  backdrop-filter: blur(var(--glass-blur)) saturate(130%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(130%);
+  border: 1px solid var(--glass-border);
+  box-shadow: inset 0 1px 0 var(--glass-hi), var(--elev-2);
+}
+.le-bar-name {
+  font-weight: 600;
+  white-space: nowrap;
+}
+.le-bar-hint {
+  color: var(--text-dim);
+}
+.le-bar-next {
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+  border-left: 1px solid var(--border);
+  padding-left: var(--s-3);
+  white-space: nowrap;
+}
+.le-bar-reset {
+  font-size: var(--fs-xs);
+  padding: var(--s-1) var(--s-2);
+}
+
+/* Each zone is one big button: dashed outline, the placement named, and a
+   "Click to move here" line under it. */
+.le-zone {
+  position: absolute;
+  pointer-events: auto;
+  display: grid;
+  place-items: center;
+  border: 2px dashed var(--primary);
+  border-radius: var(--r-lg);
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  color: var(--text);
+  cursor: pointer;
+  transition: background var(--t-fast), border-color var(--t-fast);
+}
+.le-zone:hover,
+.le-zone:focus-visible {
+  background: color-mix(in srgb, var(--primary) 30%, transparent);
+  border-style: solid;
+  outline: none;
+}
+.le-zone:hover .le-zone-label,
+.le-zone:focus-visible .le-zone-label {
+  transform: scale(1.04);
+}
+/* The placement the panel already occupies: solid, calm, not an invitation. */
+.le-zone.current {
+  border-style: solid;
+  background: color-mix(in srgb, var(--primary) 6%, transparent);
+  cursor: default;
+}
+.le-zone.current:hover {
+  background: color-mix(in srgb, var(--primary) 6%, transparent);
+}
+.le-zone.current .le-zone-hint {
+  color: var(--text-dim);
+}
+
+.le-zone-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: var(--s-2) var(--s-4);
+  border-radius: var(--r-md);
+  background: var(--glass-bg-strong);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--elev-1);
+  white-space: nowrap;
+  transition: transform var(--t-fast);
+}
+.le-zone-name {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+.le-zone-hint {
+  font-size: var(--fs-xs);
+  color: var(--primary);
+}
+
+/* quote zones: the centered dock band, matching .mod-quote's width */
+.le-q-top,
+.le-q-center,
+.le-q-bottom {
+  left: 50%;
+  width: min(var(--content-w), calc(100vw / var(--z, 1) - 2 * var(--s-5)));
+  height: var(--le-zone-h);
+  transform: translateX(-50%);
+  z-index: 2; /* above the tasks strips where they cross on narrow windows */
+}
+.le-q-top {
+  top: var(--s-5);
+}
+.le-q-center {
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+.le-q-bottom {
+  bottom: var(--s-5);
+}
+
+/* tasks zones: the full sidebar column on either edge */
+.le-t-left,
+.le-t-right {
+  top: var(--s-5);
+  bottom: var(--corner-reserve);
+  width: var(--sidebar-w);
+  z-index: 1;
+}
+.le-t-left {
+  left: var(--s-5);
+}
+.le-t-right {
+  right: var(--s-5);
+}
+
+/* ---- search track: the continuous line the bar slides along ---- */
+.le-track {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 220px;
+  transform: translateX(-50%);
+  pointer-events: auto;
+  cursor: pointer;
+  /* the rail itself is a hairline; the wide box is just an easy click target */
+  background: linear-gradient(
+      to right,
+      transparent calc(50% - 1px),
+      color-mix(in srgb, var(--primary) 70%, transparent) calc(50% - 1px),
+      color-mix(in srgb, var(--primary) 70%, transparent) calc(50% + 1px),
+      transparent calc(50% + 1px)
+    )
+    no-repeat;
+}
+.le-track:hover {
+  background-color: color-mix(in srgb, var(--primary) 8%, transparent);
+}
+.le-track-marker {
+  position: absolute;
+  left: 50%;
+  width: 120px;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--primary);
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 25%, transparent);
+}
+
+/* ---- corner buttons: pencil, swapped for the stepper + confirm/cancel ---- */
+.layout-btns {
+  position: fixed;
+  /* immediately left of the help button (40px wide, same bottom rail) */
+  right: calc(var(--s-5) + 40px + var(--s-2));
+  bottom: var(--s-5);
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+.layout-btn {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--glass-bg-strong);
+  backdrop-filter: blur(var(--glass-blur)) saturate(130%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(130%);
+  border: 1px solid var(--glass-border);
+  box-shadow: inset 0 1px 0 var(--glass-hi), var(--elev-1);
+}
+.le-icon {
+  display: flex;
+}
+.layout-btn.step {
+  color: var(--text-dim);
+}
+.layout-btn.step:hover:not(:disabled) {
+  color: var(--text);
+}
+.layout-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.layout-btn:disabled:hover {
+  border-color: var(--glass-border);
+}
+.layout-btn.ok {
+  color: var(--primary);
+  border-color: color-mix(in srgb, var(--primary) 60%, var(--glass-border));
+}
+.layout-btn.ok:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+.layout-btn.no {
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 60%, var(--glass-border));
+}
+.layout-btn.no:hover {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #fff;
+}
+
+/* ---- collapsed-handle hiding (settings: ui.hideCollapsed) ----
+   The tab/handle a collapsed panel leaves behind goes invisible but stays where
+   it was, so it is still clickable — hiding it outright would strand the panel
+   with no way back. --near-op is written by the proximity watcher in
+   modules/layout/index.ts: the handle fades up as the cursor approaches, rather
+   than only when it is directly on top of it. Hover and keyboard focus force it
+   fully visible, which also covers touch (no pointermove, no --near-op). */
+:root[data-hide-collapsed='on'] .quote-tab:not(.open),
+:root[data-hide-collapsed='on'] .todo-handle,
+:root[data-hide-collapsed='on'] .lc-pill {
+  opacity: var(--near-op, 0);
+  transition: opacity var(--t-fast);
+}
+:root[data-hide-collapsed='on'] .quote-tab:not(.open):hover,
+:root[data-hide-collapsed='on'] .quote-tab:not(.open):focus-visible,
+:root[data-hide-collapsed='on'] .todo-handle:hover,
+:root[data-hide-collapsed='on'] .todo-handle:focus-visible,
+:root[data-hide-collapsed='on'] .lc-pill:hover,
+:root[data-hide-collapsed='on'] .lc-pill:focus-visible {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .le-zone,
+  .le-zone-label,
+  .layout-edit {
+    transition: none;
+  }
+}

@@ -137,6 +137,7 @@ body {
   pointer-events: none;
 }
 .slot-overlay .help-btn,
+.slot-overlay .layout-btns,
 .slot-overlay .help-overlay,
 .slot-overlay .notes-overlay { pointer-events: auto; }
 

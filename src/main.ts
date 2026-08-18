@@ -8,6 +8,7 @@ import { storage } from './core/storage';
 import { bus } from './core/events';
 import { mountAll } from './core/registry';
 import { mountSettingsPanel } from './ui/settingsPanel';
+import { applyLayout } from './modules/layout';
 import type { ModuleContext, Settings } from './core/types';
 
 function applyTheme(theme: Settings['theme']): void {
@@ -16,6 +17,12 @@ function applyTheme(theme: Settings['theme']): void {
 
 function applyGlass(on: boolean): void {
   document.documentElement.dataset.glass = on ? 'on' : 'off';
+}
+
+// Fade out the handles collapsed panels leave behind (see layout.css).
+function applyHideCollapsed(on: boolean): void {
+  if (on) document.documentElement.dataset.hideCollapsed = 'on';
+  else delete document.documentElement.dataset.hideCollapsed;
 }
 
 // Drive the --z zoom factor: below BASE the dashboard lays out on a virtual
@@ -43,6 +50,8 @@ async function boot(): Promise<void> {
   const settings = await loadSettings();
   applyTheme(settings.theme);
   applyGlass(settings.ui.glass);
+  applyHideCollapsed(settings.ui.hideCollapsed);
+  applyLayout(settings.layout);
 
   const ctx: ModuleContext = {
     settings,
@@ -56,6 +65,8 @@ async function boot(): Promise<void> {
     ctx.settings = s as Settings;
     applyTheme(ctx.settings.theme);
     applyGlass(ctx.settings.ui.glass);
+    applyHideCollapsed(ctx.settings.ui.hideCollapsed);
+    applyLayout(ctx.settings.layout);
   });
 
   // Settings can also change from outside this page — the service worker's
@@ -67,6 +78,8 @@ async function boot(): Promise<void> {
       if (JSON.stringify(s) === JSON.stringify(ctx.settings)) return; // our own write
       applyTheme(s.theme);
       applyGlass(s.ui.glass);
+      applyHideCollapsed(s.ui.hideCollapsed);
+      applyLayout(s.layout);
       bus.emit('settings-changed', s);
     });
   });

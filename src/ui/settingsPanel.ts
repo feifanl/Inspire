@@ -344,8 +344,9 @@ export function mountSettingsPanel(ctx: ModuleContext): void {
   function renderList(field: SettingsField): HTMLElement {
     const arr = ((getByPath(ctx.settings, field.key) as Record<string, unknown>[]) ?? []).slice();
     const itemFields = field.itemFields ?? [];
-    // Title shown on a collapsed row: the first text field's value (e.g. a board's name).
-    const titleKey = itemFields.find((f) => f.type === 'text')?.key;
+    // Title shown on a collapsed row: the first free-text field's value (a
+    // board's name, the opening words of a quote — .list-row-title ellipsizes).
+    const titleKey = itemFields.find((f) => f.type === 'text' || f.type === 'textarea')?.key;
 
     const rowsEl = arr.map((row, i) => {
       const rid = String(row.id ?? `${field.key}:${i}`);
@@ -357,9 +358,14 @@ export function mountSettingsPanel(ctx: ModuleContext): void {
         fieldWrap(
           sf,
           controlFor(sf, row[sf.key], (v) => {
-            const next = arr.slice();
-            next[i] = { ...row, [sf.key]: v };
-            saveArray(field.key, next);
+            // Re-read the array at write time: a change event can fire from a row
+            // element the last save already replaced (blur → save → rerender →
+            // the click that caused the blur lands on the old node), and the
+            // captured `arr`/`row` would then write back a stale sibling field.
+            const live = ((getByPath(ctx.settings, field.key) as Record<string, unknown>[]) ?? []).slice();
+            const base = live[i] ?? row;
+            live[i] = { ...base, [sf.key]: v };
+            saveArray(field.key, live);
           }),
           sf.type === 'toggle',
         ),

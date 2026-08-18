@@ -274,13 +274,15 @@ function celebrate(card: HTMLElement): void {
 }
 
 function rebuild(): void {
+  // Arrows point the way the sidebar moves, so they flip with the docked side.
+  const onLeft = ctx.settings.layout.todoSide === 'left';
   // Collapsed → just a handle to bring the sidebar back.
   if (ctx.settings.ui.todoHidden) {
     host.replaceChildren(
       h(
         'button',
         { class: 'todo-handle ui-enter', title: 'Show tasks', 'aria-label': 'Show tasks', onClick: () => ctx.saveSettings({ ui: { todoHidden: false } }) },
-        '›',
+        onLeft ? '›' : '‹',
       ),
     );
     return;
@@ -298,7 +300,7 @@ function rebuild(): void {
     h(
       'button',
       { class: 'todo-hide', title: 'Hide tasks', 'aria-label': 'Hide tasks', onClick: () => ctx.saveSettings({ ui: { todoHidden: true } }) },
-      '‹',
+      onLeft ? '‹' : '›',
     ),
   );
   const header = h('div', { class: 'todo-head' }, left, headActions);
@@ -535,6 +537,7 @@ function trelloSig(): string {
   ]);
 }
 let lastHidden = false;
+let lastSide: 'left' | 'right' = 'left'; // docked edge, watched for arrow flips
 let animateShow = false; // play enter animation when the card returns from hidden
 
 export const todo: DashboardModule = {
@@ -592,8 +595,14 @@ export const todo: DashboardModule = {
       }
     }, 60_000);
     lastHidden = c.settings.ui.todoHidden;
-    // Re-sync when Trello config changes; rebuild when the hide toggle flips.
+    lastSide = c.settings.layout.todoSide;
+    // Re-sync when Trello config changes; rebuild when the hide toggle flips or
+    // the sidebar is docked to the other edge (the arrows point the other way).
     unsub = c.bus.on('settings-changed', () => {
+      if (c.settings.layout.todoSide !== lastSide) {
+        lastSide = c.settings.layout.todoSide;
+        if (host) rebuild();
+      }
       if (c.settings.ui.todoHidden !== lastHidden) {
         const nowHidden = c.settings.ui.todoHidden;
         lastHidden = nowHidden;

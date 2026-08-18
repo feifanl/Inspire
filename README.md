@@ -12,10 +12,11 @@ The extension replaces the default new tab with a **life clock**, **daily todos*
 
 - **Life clock** - see how much of your current day, week, month, year, decade, and life are left as progress bars and grids. Zoom in and out to change views. Meant as a reminder that life is fleeting, not as something to get depressed about.
 - **Todos** - a per-day task list in the left sidebar. Works fully offline, and can optionally two-way sync with a Trello board.
-- **Quote** - a daily quote from [ZenQuotes](https://zenquotes.io) with included offline quotes (philosophy, self-help, morality).
+- **Quote** - a daily quote from [ZenQuotes](https://zenquotes.io) with included offline quotes (philosophy, self-help, morality). Write your own quotes too — mixed into the rotation, or shown on their own.
 - **Pins wall** - a full Pinterest-style pins board of your own images, grouped into boards. Right-click any image on the web to add it. Auto-rotate boards or slowly drift through pins with panorama scroll.
 - **Notes** - add sticky notes so you can jot down any idea; open on a full-screen interactive board.
 - **Wallpaper** - set a wallpaper -- solid color, image URL, or a locally uploaded image.
+- **Move mode** - the pencil button opens the layout editor: `‹` `›` step through one panel at a time, with everything else off screen — quote at the top, center, or bottom; tasks on the left or right edge; the search bar anywhere down the centre line. Green check keeps it, red × throws it away.
 - **Themes** - dark / light, plus a liquid-glass toggle.
 
 Features zoom to fit any window size.
@@ -85,7 +86,7 @@ src/
   main.ts          boot + zoom controller
   background.ts    service worker (right-click "Add image to pins board")
   core/            DOM, events bus, storage, settings, module registry
-  modules/         lifeclock, todo, notes, pins, quote, search, wallpaper
+  modules/         lifeclock, todo, notes, pins, quote, search, wallpaper, layout, help
   ui/              settings panel
   styles/          tokens, base, fonts
 scripts/           icon + font generators

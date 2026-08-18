@@ -177,6 +177,14 @@
   margin-bottom: var(--s-5);
   position: relative;
   min-height: 150px;
+  /* Cap the paper so a long note can never grow taller than a column — past that
+     point `break-inside: avoid` gives up and Chromium splits the card across
+     columns (half a note in one, half in the next). Capped, the overflow scrolls
+     inside .note-text instead. Column layout, so this is a flex column: the text
+     takes the slack and the date stays pinned to the bottom edge. */
+  max-height: 300px;
+  display: flex;
+  flex-direction: column;
   background: var(--note-paper);
   color: var(--note-ink);
   border: none;
@@ -211,6 +219,21 @@
   font-size: var(--fs-lg);
   line-height: 1.35;
   cursor: text;
+  /* the scrolling region inside the capped card */
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain; /* don't chain the scroll to the board grid */
+  /* the global thumb is tuned for dark chrome and vanishes on light paper */
+  scrollbar-color: rgb(0 0 0 / 0.3) transparent;
+}
+.note-text::-webkit-scrollbar-thumb {
+  background: rgb(0 0 0 / 0.28);
+  background-clip: padding-box;
+}
+.note-text::-webkit-scrollbar-thumb:hover {
+  background: rgb(0 0 0 / 0.45);
+  background-clip: padding-box;
 }
 /* inline editor: reuse the paper look, no hover-scale to keep the caret steady */
 .note-card.editing:hover {
@@ -218,8 +241,10 @@
 }
 .note-edit-text {
   width: 100%;
-  min-height: 120px;
-  resize: vertical;
+  /* fill the capped card, shrinking rather than pushing Save/Cancel out of view */
+  flex: 1;
+  min-height: 90px;
+  resize: none;
   background: rgb(255 255 255 / 0.35);
   border: 1px solid var(--note-accent);
   border-radius: 2px;
