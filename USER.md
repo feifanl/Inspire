@@ -69,7 +69,7 @@ The life clock is a reminder that time is finite, not a reason to spiral. Watch 
 - **Trello API key**, **Trello token** - generate both at [trello.com/power-ups/admin](https://trello.com/power-ups/admin).
 - **Trello list ID** - open the list's "Copy link"; the list ID is the last part of the path.
 
-With all three creds set, cards in the list show up locally, adding a task creates a card, and checking it archives the card. Offline or bad creds keep todos fully local (grey status dot, no errors). **Clear** wipes local items only; it never touches Trello cards.
+With the creds set, the sidebar **mirrors the Trello list on every new tab**: cards added, renamed, reordered, checked or deleted in Trello all show up the next time you open a tab, not just when the list changes. Adding a task creates a card, checking one ticks it in Trello, and dragging a row repositions the card. Tasks added while offline are pushed up before the next mirror, so nothing is lost. Offline or bad creds keep todos fully local (no errors). **Clear** wipes local items only; it never touches Trello cards, so they come back on the next sync.
 
 ### Quote
 
@@ -101,7 +101,9 @@ With all three creds set, cards in the list show up locally, adding a task creat
 
 - **Show notes** - on by default. Off hides the corner buttons.
 
-Notes are sticky-note paper in five colors (green, yellow, blue, red, gray). Pick a color in the composer and the paper matches. Deleting a note peels it off the board. Notes stick around forever and cap at 500 characters each. A long note keeps its card size and scrolls inside it, so it never splits across two columns of the board.
+Notes are sticky-note paper in five colors (green, yellow, blue, red, gray). Pick a color in the composer and the paper matches. Deleting a note peels it off the board. Notes stick around forever and cap at 500 characters each. A long note keeps its card size and scrolls inside it.
+
+The board is a free canvas: **drag any note by its paper to move it anywhere**, and its position is saved. Click a note's text (without moving) to edit it. New notes, and notes from before this version, drop into the first free slot automatically. The dragged note comes to the front, and the board scrolls if you push notes past the edge.
 
 ### Layout
 

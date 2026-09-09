@@ -229,4 +229,8 @@ export interface StickyNote {
   text: string; // ≤ 500 chars
   color: NoteColor;
   createdAt: number;
+  // Free-canvas position on the notes board, in px from the canvas top-left.
+  // Absent on notes created before dragging existed — auto-placed on first open.
+  x?: number;
+  y?: number;
 }

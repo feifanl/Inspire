@@ -117,8 +117,10 @@ function navList(dir: -1 | 1): void {
   syncFromTrello();
 }
 
-// Pull server cards, merge in unseen ones, push local-only ones up. Never
-// blocks first paint (called post-render) and never throws.
+// Mirror the configured Trello list into the sidebar. Runs on every new tab
+// (post-render) as well as on list/config changes, so cards added, renamed,
+// reordered, checked or deleted in Trello all show up on the next tab. Never
+// blocks first paint and never throws.
 async function syncFromTrello(): Promise<void> {
   await resolveBoardLists(); // board's lists first — feeds weekday + manual nav
   syncCursorToBoard(); // position the manual cursor for this board
@@ -126,62 +128,36 @@ async function syncFromTrello(): Promise<void> {
   const cfg = trelloCfg();
   if (!cfg) return;
   const targetList = cfg.listId;
-  // Moving to a different list — a new weekday in auto mode, or an arrow press in
-  // manual mode — rewrites the sidebar to mirror that list instead of appending.
-  const isSwitch = state.syncedListId != null && state.syncedListId !== targetList;
   const cards = await trelloPull(cfg);
   if (cards === null) {
-    rebuild();
+    rebuild(); // offline: keep the local copy untouched
     return;
   }
-  if (isSwitch) {
-    state.items = cards;
-    state.syncedListId = targetList;
-    await saveTodos(state);
-    rebuild();
-    return;
-  }
-  const known = new Set(state.items.filter((i) => i.trelloCardId).map((i) => i.trelloCardId));
-  // Trello per-card done + pos — source of truth for checked state and order.
-  const doneByCard = new Map(cards.map((c) => [c.trelloCardId, c.done]));
-  const posByCard = new Map(cards.map((c) => [c.trelloCardId, c.pos]));
-  let changed = false;
-  for (const card of cards) {
-    if (!known.has(card.trelloCardId)) {
-      state.items.push(card);
-      changed = true;
-    }
-  }
-  // Reflect Trello check/uncheck and reordering onto already-known items.
-  for (const item of state.items) {
-    if (item.trelloCardId && doneByCard.has(item.trelloCardId)) {
-      const remote = doneByCard.get(item.trelloCardId)!;
-      if (item.done !== remote) {
-        item.done = remote;
-        changed = true;
-      }
-      const remotePos = posByCard.get(item.trelloCardId)!;
-      if (item.pos !== remotePos) {
-        item.pos = remotePos;
-        changed = true;
-      }
-    }
-  }
+  // Push local-only rows up FIRST, so mirroring can never drop a task that was
+  // added while offline (or in a tab that closed before its create landed).
   for (const item of state.items) {
     if (!item.trelloCardId) {
       const id = await trelloCreate(cfg, item);
-      if (id) {
-        item.trelloCardId = id;
-        changed = true;
-      }
+      if (id) item.trelloCardId = id;
     }
   }
-  // Record the list these items now mirror, so the next switch is detected.
-  if (state.syncedListId !== targetList) {
-    state.syncedListId = targetList;
-    changed = true;
-  }
-  if (changed) await saveTodos(state);
+  // Trello is the source of truth for membership, text, desc, link, order and
+  // done state. Rows we already had keep their local id (so an open detail pane
+  // survives the refresh); cards deleted or moved away in Trello disappear here.
+  const prevByCard = new Map(
+    state.items.filter((i) => i.trelloCardId).map((i) => [i.trelloCardId!, i]),
+  );
+  const mirrored = cards.map((card) => {
+    const prev = prevByCard.get(card.trelloCardId!);
+    return prev ? { ...card, id: prev.id, createdAt: prev.createdAt } : card;
+  });
+  // A row whose create failed (write still offline) stays local until it syncs.
+  const unsynced = state.items.filter((i) => !i.trelloCardId);
+  state.items = [...mirrored, ...unsynced];
+  state.syncedListId = targetList;
+  // The expanded row may have just vanished from the board.
+  if (expandedId && !state.items.some((i) => i.id === expandedId)) expandedId = null;
+  await saveTodos(state);
   rebuild();
 }
 
