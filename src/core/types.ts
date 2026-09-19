@@ -110,6 +110,7 @@ export interface Settings {
     screenRotation: PinScreenRotation; // cycle which pins fill the wall when the pool overflows; 'scroll' = panorama
     screenIntervalMinutes?: number; // used iff screenRotation === 'interval'
     screenScrollSeconds?: number; // seconds between column slides, iff screenRotation === 'scroll'
+    tileSize: number; // % of the default column width (100 = default); bigger → fewer, larger images
   };
   notes: {
     enabled: boolean;
@@ -159,6 +160,7 @@ export const DEFAULT_SETTINGS: Settings = {
     screenRotation: 'off',
     screenIntervalMinutes: 5,
     screenScrollSeconds: 100,
+    tileSize: 100,
   },
   notes: { enabled: true },
   layout: { quotePos: 'bottom', todoSide: 'left', searchY: null },

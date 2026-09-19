@@ -92,7 +92,7 @@ function clearTimers(): void {
 function pageCapacity(loaded: Loaded[]): number {
   const viewH = canvasH();
   const avail = canvasW() - GAP * 2;
-  const cols = Math.max(1, Math.round(avail / TARGET_COL));
+  const cols = Math.max(1, Math.round(avail / targetCol()));
   const colW = (avail - GAP * (cols - 1)) / cols;
   const colH = new Array(cols).fill(0);
   let count = 0;
@@ -125,7 +125,17 @@ function preload(pool: Pin[]): Promise<Loaded[]> {
   ).then((a) => a.filter((x): x is Loaded => x !== null));
 }
 
-const TARGET_COL = 250; // preferred column width; column count derives from viewport
+const TARGET_COL = 250; // preferred column width at 100% size; column count derives from viewport
+const SIZE_MIN = 50; // tileSize bounds, % of TARGET_COL
+const SIZE_MAX = 300;
+
+// Preferred column width after the user's image-size setting. Every layout path
+// (wall, page capacity, panorama) derives its column count from this, so a
+// bigger size means fewer, wider columns and larger images.
+function targetCol(): number {
+  const pct = Number(ctx.settings.pins.tileSize) || 100;
+  return (TARGET_COL * Math.min(SIZE_MAX, Math.max(SIZE_MIN, pct))) / 100;
+}
 
 function tile(l: Loaded, idx: number, drag = true): HTMLElement {
   const img = h('img', { class: 'pin-img', alt: '' }) as HTMLImageElement;
@@ -160,7 +170,7 @@ function buildWallDom(loaded: Loaded[]): HTMLElement {
   const wall = h('div', { class: 'pins-wall' });
 
   const avail = canvasW() - GAP * 2;
-  const cols = Math.max(1, Math.round(avail / TARGET_COL));
+  const cols = Math.max(1, Math.round(avail / targetCol()));
   const colW = (avail - GAP * (cols - 1)) / cols;
   const colH = new Array(cols).fill(0); // running height of each column
 
@@ -188,7 +198,7 @@ function buildWallDom(loaded: Loaded[]): HTMLElement {
 // (no black gutter on the right), matching the masonry wall's sizing.
 function colMetrics(): { cols: number; colW: number; step: number } {
   const avail = canvasW() - GAP * 2;
-  const cols = Math.max(1, Math.round(avail / TARGET_COL));
+  const cols = Math.max(1, Math.round(avail / targetCol()));
   const colW = (avail - GAP * (cols - 1)) / cols;
   return { cols, colW, step: colW + GAP };
 }
@@ -655,6 +665,15 @@ const schema: SettingsField[] = [
     type: 'number',
     min: 1,
     showIf: (s) => s.pins.mode === 'board' && s.pins.boardRotation === 'interval',
+  },
+  {
+    key: 'pins.tileSize',
+    label: 'Image size (%)',
+    type: 'range',
+    min: SIZE_MIN,
+    max: SIZE_MAX,
+    step: 10,
+    help: 'Scales every pin on the wall. Bigger shows fewer, larger images; smaller fits more.',
   },
   {
     key: 'pins.screenRotation',
