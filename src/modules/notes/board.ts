@@ -238,8 +238,10 @@ export function mountBoard(ctx: ModuleContext, onChange: () => void): void {
       if (!moved && Math.hypot(dx, dy) < DRAG_SLOP) return;
       moved = true;
       card.classList.add('dragging');
-      n.x = Math.max(0, originX + dx);
-      n.y = Math.max(0, originY + dy);
+      // screen px → canvas px, so the card stays under the cursor when zoomed out
+      const z = zoom();
+      n.x = Math.max(0, originX + dx / z);
+      n.y = Math.max(0, originY + dy / z);
       position(card, n);
     });
 
