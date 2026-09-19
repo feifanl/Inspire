@@ -218,6 +218,46 @@
   box-shadow: 0 18px 34px rgb(0 0 0 / 0.55), 0 3px 6px rgb(0 0 0 / 0.4);
 }
 .note-card.dragging .note-text { cursor: grabbing; }
+/* Hand-resized (JS sets width/height): the size is the user's, so drop the
+   default height cap; the text still scrolls if it overflows the box. */
+.note-card.sized {
+  min-height: 0;
+  max-height: none;
+}
+/* No hover-scale while resizing: the grip must stay under the cursor. */
+.note-card.resizing,
+.note-card.resizing:hover {
+  transition: none;
+  transform: none;
+}
+/* Resize grip: a small diagonal-hatch corner, visible on hover. */
+.note-resize {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 16px;
+  height: 16px;
+  cursor: nwse-resize;
+  touch-action: none;
+  opacity: 0;
+  transition: opacity var(--t-fast);
+  background: linear-gradient(
+    135deg,
+    transparent 45%,
+    var(--note-ink-dim) 45%,
+    var(--note-ink-dim) 52%,
+    transparent 52%,
+    transparent 65%,
+    var(--note-ink-dim) 65%,
+    var(--note-ink-dim) 72%,
+    transparent 72%
+  );
+}
+.note-card:hover .note-resize,
+.note-card.resizing .note-resize,
+.note-resize:focus-visible {
+  opacity: 0.8;
+}
 /* Peel-off on delete: the note curls up from its top-left corner and lifts away.
    A longer, eased transition sells the paper peel; JS removes it on transitionend. */
 .note-card.peeling {

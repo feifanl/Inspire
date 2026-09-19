@@ -10,6 +10,18 @@ const CARD_W = 220;
 const CARD_H = 190;
 const GAP = 24;
 const CANVAS_PAD = 40; // slack kept past the furthest note so the canvas can grow
+// Bounds for a hand-resized card.
+const MIN_W = 160;
+const MIN_H = 120;
+const MAX_W = 720;
+const MAX_H = 720;
+
+// The dashboard is scaled by --z (see main.ts installZoom), so a pointer delta
+// in screen px is delta / z in canvas px.
+function zoom(): number {
+  const z = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--z'));
+  return z > 0 ? z : 1;
+}
 
 // Persistence helpers (single storage key "notes", a StickyNote[]).
 export function loadNotes(ctx: ModuleContext): Promise<StickyNote[]> {
@@ -75,6 +87,9 @@ export function mountBoard(ctx: ModuleContext, onChange: () => void): void {
   let open = false;
   let closing = false; // true while the close fade is running (before detach)
   let editingId: string | null = null; // note whose text is being edited inline
+  // Rendered size of the card when editing began. The editor adopts it, so a
+  // default (auto-height) card doesn't collapse to the textarea's minimum.
+  let editSize: { w: number; h: number } | null = null;
   let topZ = 1; // monotonic stacking counter — the last-dragged note sits on top
 
   // .notes-grid scrolls; .notes-canvas is the positioned surface inside it.
@@ -98,10 +113,10 @@ export function mountBoard(ctx: ModuleContext, onChange: () => void): void {
   // Stretch the canvas past the furthest note so dragging outward keeps room
   // (and the scroll container knows how far it can go).
   function sizeCanvas(): void {
-    const maxX = notes.reduce((m, n) => Math.max(m, n.x ?? 0), 0);
-    const maxY = notes.reduce((m, n) => Math.max(m, n.y ?? 0), 0);
-    canvas.style.minWidth = `${maxX + CARD_W + CANVAS_PAD}px`;
-    canvas.style.minHeight = `${maxY + CARD_H + CANVAS_PAD}px`;
+    const maxX = notes.reduce((m, n) => Math.max(m, (n.x ?? 0) + (n.w ?? CARD_W)), 0);
+    const maxY = notes.reduce((m, n) => Math.max(m, (n.y ?? 0) + (n.h ?? CARD_H)), 0);
+    canvas.style.minWidth = `${maxX + CANVAS_PAD}px`;
+    canvas.style.minHeight = `${maxY + CANVAS_PAD}px`;
   }
 
   function render(): void {
@@ -123,10 +138,68 @@ export function mountBoard(ctx: ModuleContext, onChange: () => void): void {
     }
   }
 
-  // Place a card at its stored coordinates.
+  // Place a card at its stored coordinates (and size, if it was resized).
   function position(card: HTMLElement, n: StickyNote): void {
     card.style.left = `${n.x ?? 0}px`;
     card.style.top = `${n.y ?? 0}px`;
+    const sized = n.w != null && n.h != null;
+    card.classList.toggle('sized', sized);
+    card.style.width = sized ? `${n.w}px` : '';
+    card.style.height = sized ? `${n.h}px` : '';
+  }
+
+  // Bottom-right grip. Dragging it sets an explicit size (the card then stops
+  // growing with its text and scrolls inside that box); double-click drops the
+  // size and returns the card to its default look.
+  function resizeGrip(card: HTMLElement, n: StickyNote): HTMLElement {
+    const grip = h('div', { class: 'note-resize', title: 'Drag to resize · double-click to reset' });
+    let startX = 0;
+    let startY = 0;
+    let originW = 0;
+    let originH = 0;
+    let down = false;
+    grip.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0) return;
+      e.stopPropagation(); // not a card drag
+      e.preventDefault();
+      down = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      // start from the rendered box, so a default card resizes from where it is
+      const z = zoom();
+      const r = card.getBoundingClientRect();
+      originW = n.w ?? Math.round(r.width / z);
+      originH = n.h ?? Math.round(r.height / z);
+      card.style.zIndex = String(++topZ);
+      card.classList.add('resizing');
+      grip.setPointerCapture(e.pointerId);
+    });
+    grip.addEventListener('pointermove', (e) => {
+      if (!down) return;
+      const z = zoom();
+      n.w = Math.round(Math.min(MAX_W, Math.max(MIN_W, originW + (e.clientX - startX) / z)));
+      n.h = Math.round(Math.min(MAX_H, Math.max(MIN_H, originH + (e.clientY - startY) / z)));
+      position(card, n);
+    });
+    const end = (e: PointerEvent) => {
+      if (!down) return;
+      down = false;
+      if (grip.hasPointerCapture(e.pointerId)) grip.releasePointerCapture(e.pointerId);
+      card.classList.remove('resizing');
+      sizeCanvas();
+      saveNotes(ctx, notes);
+    };
+    grip.addEventListener('pointerup', end);
+    grip.addEventListener('pointercancel', end);
+    grip.addEventListener('dblclick', (e) => {
+      e.stopPropagation();
+      delete n.w;
+      delete n.h;
+      position(card, n);
+      sizeCanvas();
+      saveNotes(ctx, notes);
+    });
+    return grip;
   }
 
   // Pointer-drag a card around the canvas. The pointer is captured on press so
@@ -202,6 +275,7 @@ export function mountBoard(ctx: ModuleContext, onChange: () => void): void {
       h('div', { class: 'note-text', title: 'Click to edit · drag to move' }, n.text),
       h('div', { class: 'note-date' }, fmtDate(n.createdAt)),
     );
+    card.appendChild(resizeGrip(card, n));
     position(card, n);
     makeDraggable(card, n, () => beginEdit(n.id));
     return card;
@@ -235,10 +309,18 @@ export function mountBoard(ctx: ModuleContext, onChange: () => void): void {
       h('div', { class: 'note-date' }, fmtDate(n.createdAt)),
     );
     position(card, n);
+    if (editSize && !card.classList.contains('sized')) {
+      card.classList.add('sized');
+      card.style.width = `${editSize.w}px`;
+      card.style.height = `${editSize.h}px`;
+    }
     return card;
   }
 
   function beginEdit(id: string): void {
+    const view = canvas.querySelector<HTMLElement>(`.note-card[data-id="${id}"]`);
+    // offsetWidth/Height: layout size, unaffected by --z and the hover scale
+    editSize = view ? { w: view.offsetWidth, h: view.offsetHeight } : null;
     editingId = id;
     render();
   }

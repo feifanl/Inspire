@@ -233,4 +233,8 @@ export interface StickyNote {
   // Absent on notes created before dragging existed — auto-placed on first open.
   x?: number;
   y?: number;
+  // Hand-resized size in px. Absent = default card (fixed width, height grows
+  // with the text up to a cap, then scrolls).
+  w?: number;
+  h?: number;
 }
