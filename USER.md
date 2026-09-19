@@ -32,7 +32,7 @@ You never *need* the keyboard.
 - **Pins:** a chevron tab (top-right) opens the board switcher (`<` name `>`); `[` / `]` also cycle boards. Drag a pin to move it; a plain click opens its link.
 - **Notes:** `+ note` opens the composer; the `>` arrow button (with a count badge) opens the board. You can also drag a freshly-saved note toast to the right to open the board.
 - **Collapse tabs:** the quote, todo, and life-clock panels each have a small arrow tab to hide or show them. The arrow points down while the panel is put away and up to fold it back.
-- **Move panels:** the pencil button (bottom-right, left of `?`) opens move mode. It works one panel at a time: every other panel, icon, and corner button disappears, the toolbar names the panel you're moving (`Quote · 1/3`), and the `‹` `›` buttons step to the previous/next panel. The quote and the task list show labelled zones — click one and the panel moves there. The search bar instead slides along a line down the middle of the screen: drag the bar itself, or click anywhere on the line. Nothing is saved until you press the green check; the red × (or `Esc`, or opening anything else) throws the changes away.
+- **Move panels:** the pencil button (bottom-right, left of `?`) opens move mode. It works one panel at a time: every other panel, icon, and corner button disappears, the toolbar names the panel you're moving (`Quote · 1/4`), and the `‹` `›` buttons step to the previous/next panel. The quote, task list, search bar, and life clock can each be **dragged anywhere** on the screen, and **resized** with the round grip on the panel's bottom-right corner (50%–200%; double-click the grip for 100%). The toolbar shows the current size, and **Reset** puts the panel back in its default spot at its default size. The quote and the task list also show labelled zones — click one to dock the panel there. Clicks anywhere else are ignored while you're editing. Nothing is saved until you press the green check (or `Enter`); the red × (or `Esc`) throws the changes away.
 - **Settings:** the gear button (bottom-left). Its header holds the theme and liquid-glass toggles.
 - **Help:** the `?` button (bottom-right) opens this guide.
 
@@ -94,7 +94,7 @@ With the creds set, the sidebar **mirrors the Trello list on every new tab**: ca
 
 ### Search
 
-- **Show search bar** - on by default. A glass pill above the life clock, focused on a fresh tab. Type and press `Enter`. Its height on screen is free — see **Layout** below, or drag it in move mode.
+- **Show search bar** - on by default. A glass pill above the life clock, focused on a fresh tab. Type and press `Enter`. Drag it anywhere, or resize it, in move mode (see **Layout** below).
 - **Search engine** - Google, DuckDuckGo, Brave, or Bing. Defaults to Google.
 
 ### Notes
@@ -109,10 +109,9 @@ The board is a free canvas: **drag any note by its paper to move it anywhere**, 
 
 - **Quote position** - Top, Center, or Bottom. Defaults to Bottom. Center puts the quote in the middle column, under the life clock.
 - **Tasks side** - Left or Right edge. Defaults to Left. The collapse arrows and the pins board switcher flip with it.
-- **Search bar height (%)** - how far down the screen the search bar hangs, 5 to 94. Blank (the default) keeps it in the centre column above the life clock. It stays horizontally centered either way.
 - **Hide collapsed handles** - off by default. On, the tab or handle a collapsed panel leaves behind (quote tab, tasks handle, life-clock pill) fades out of sight. It stays exactly where it was and still works: bring the cursor anywhere near it and it fades back in, brightening as you get closer, so you never have to hunt for the exact pixel.
 
-All three are also settable from the pencil button (bottom-right), which is usually easier: move the panels on the page, then press the green check to keep it.
+The pencil button (bottom-right) does more: drag any panel anywhere and resize it, then press the green check to keep it. A panel you've dragged off its dock ignores Quote position / Tasks side until you Reset it or click a dock zone.
 
 ---
 

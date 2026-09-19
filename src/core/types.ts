@@ -67,6 +67,16 @@ export type SearchEngine = 'google' | 'duckduckgo' | 'brave' | 'bing';
 // Placements the layout editor can drop a panel into.
 export type QuotePos = 'top' | 'center' | 'bottom';
 export type SideLR = 'left' | 'right';
+// Panels the layout editor can drag freely and scale.
+export type PanelId = 'quote' | 'todo' | 'search' | 'lifeclock';
+// A panel's free placement. x/y are its anchor point as % of the screen (see
+// ANCHOR in modules/layout); both null = sits in its normal dock. scale is a
+// uniform zoom factor, 1 = default size.
+export interface PanelPlace {
+  x: number | null;
+  y: number | null;
+  scale: number;
+}
 
 export interface Settings {
   version: 1; // migration guard
@@ -118,7 +128,8 @@ export interface Settings {
   layout: {
     quotePos: QuotePos; // where the quote dock sits ('center' = in the column, under the clock)
     todoSide: SideLR; // which edge the tasks sidebar is pinned to
-    searchY: number | null; // search bar centre, % down the screen; null = in the column
+    searchY: number | null; // legacy search height (%); migrated into panels.search on load
+    panels: Record<PanelId, PanelPlace>; // free position + scale per panel
   };
   search: {
     enabled: boolean;
@@ -163,7 +174,18 @@ export const DEFAULT_SETTINGS: Settings = {
     tileSize: 100,
   },
   notes: { enabled: true },
-  layout: { quotePos: 'bottom', todoSide: 'left', searchY: null },
+  layout: {
+    quotePos: 'bottom',
+    todoSide: 'left',
+    searchY: null,
+    // Every key spelled out: deepMerge only keeps keys the defaults have.
+    panels: {
+      quote: { x: null, y: null, scale: 1 },
+      todo: { x: null, y: null, scale: 1 },
+      search: { x: null, y: null, scale: 1 },
+      lifeclock: { x: null, y: null, scale: 1 },
+    },
+  },
   search: { enabled: true, engine: 'google' },
   ui: { quoteOpen: false, todoHidden: false, clockMinimized: false, pinsBoardsOpen: false, glass: true, hideCollapsed: false },
 };

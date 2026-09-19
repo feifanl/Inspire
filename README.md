@@ -16,7 +16,7 @@ The extension replaces the default new tab with a **life clock**, **daily todos*
 - **Pins wall** - a full Pinterest-style pins board of your own images, grouped into boards. Right-click any image on the web to add it. Auto-rotate boards or slowly drift through pins with panorama scroll.
 - **Notes** - add sticky notes so you can jot down any idea; open on a full-screen interactive board.
 - **Wallpaper** - set a wallpaper -- solid color, image URL, or a locally uploaded image.
-- **Move mode** - the pencil button opens the layout editor: `‹` `›` step through one panel at a time, with everything else off screen — quote at the top, center, or bottom; tasks on the left or right edge; the search bar anywhere down the centre line. Green check keeps it, red × throws it away.
+- **Move mode** - the pencil button opens the layout editor: `‹` `›` step through one panel at a time, with everything else off screen — drag the quote, tasks, search bar, or life clock anywhere and resize it from its corner grip, or snap the quote/tasks back into their docks. Green check keeps it, red × throws it away.
 - **Themes** - dark / light, plus a liquid-glass toggle.
 
 Features zoom to fit any window size.

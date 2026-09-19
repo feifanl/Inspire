@@ -1,6 +1,6 @@
 /* Panel placements + the layout editor.
    Placement is data-driven: applyLayout() (modules/layout/index.ts) writes the
-   layout onto <html> as data-quote-pos / data-todo-side / --search-y, and the
+   layout onto <html> as data-quote-pos / data-todo-side / data-free-* + --p-*, and the
    rules below move the panels. Loaded after base.css, so these overrides win
    without !important. */
 
@@ -40,17 +40,67 @@
   align-self: flex-end;
 }
 
-/* ---- search bar: free height on the centre line ----
-   Default (no data-search-pos) leaves it in the column above the life clock.
-   Placed by hand, it lifts out of the flow and hangs at --search-y, measured
-   down the screen from the top; x stays pinned to the centre. */
-:root[data-search-pos='free'] .mod-search {
+/* ---- free placement (layout editor drag) ----
+   A panel dragged off its dock gets data-free-<id> on <html> and its anchor
+   point in --p-<id>-x/-y (% of the canvas). x is always the panel's horizontal
+   centre; y is its bottom (quote), top (tasks, clock) or centre (search) — see
+   ANCHOR in index.ts. Loaded after the dock rules above, so these win. */
+:root[data-free-quote] .mod-quote {
   position: fixed;
-  left: 50%;
-  top: var(--search-y, 12%);
-  transform: translate(-50%, -50%);
+  left: var(--p-quote-x);
+  top: var(--p-quote-y);
+  bottom: auto;
+  transform: translate(-50%, -100%);
   width: min(var(--content-w), calc(100vw / var(--z, 1) - 2 * var(--s-5)));
+}
+/* A free quote no longer needs the column's reserved dock band. */
+:root[data-free-quote] .layout {
+  padding-top: var(--s-6);
+  padding-bottom: var(--s-6);
+}
+:root[data-free-todo] .slot-sidebar {
+  left: var(--p-todo-x);
+  right: auto;
+  top: var(--p-todo-y);
+  transform: translateX(-50%);
+}
+:root[data-free-search] .mod-search {
+  position: fixed;
+  left: var(--p-search-x);
+  top: var(--p-search-y);
+  transform: translate(-50%, -50%);
+  /* the width it had in the column, so lifting it out doesn't jump */
+  width: calc(var(--content-w) - 2 * var(--s-4));
   z-index: 4;
+}
+:root[data-free-lifeclock] .mod-lifeclock {
+  position: fixed;
+  left: var(--p-lifeclock-x);
+  top: var(--p-lifeclock-y);
+  transform: translateX(-50%);
+  /* the width it had in the column (content-w minus the column's padding) */
+  width: calc(var(--content-w) - 2 * var(--s-4));
+  z-index: 2;
+}
+
+/* ---- per-panel size (layout editor grip) ----
+   `zoom`, not a transform: it scales the layout box too, so a shrunk clock
+   frees room in the column and docked panels keep their dock edges. */
+.mod-quote {
+  zoom: var(--p-quote-scale, 1);
+}
+.mod-todo {
+  zoom: var(--p-todo-scale, 1);
+}
+/* the sidebar is a fixed-width scroller: widen it with its content */
+.slot-sidebar {
+  width: calc(var(--sidebar-w) * var(--p-todo-scale, 1));
+}
+.mod-search {
+  zoom: var(--p-search-scale, 1);
+}
+.mod-lifeclock {
+  zoom: var(--p-lifeclock-scale, 1);
 }
 
 /* ---- edit mode: only the panel being moved stays on screen ----
@@ -84,17 +134,17 @@
   outline: 2px dashed var(--primary);
   outline-offset: 6px;
   border-radius: var(--r-lg);
-  pointer-events: auto; /* the search bar is dragged by its own box */
+  pointer-events: auto; /* the panel is dragged by its own box */
 }
 /* Inert while it's the subject: a click must not cycle the quote, tick a task,
    or focus the search input. */
 .le-movable > * {
   pointer-events: none;
 }
-.mod-search.le-movable {
+.le-movable {
   cursor: grab;
 }
-.mod-search.le-movable.le-sliding {
+.le-movable.le-sliding {
   cursor: grabbing;
 }
 
@@ -150,44 +200,20 @@
   padding: var(--s-1) var(--s-2);
 }
 
-/* Each zone is one big button: dashed outline, the placement named, and a
-   "Click to move here" line under it. */
+/* A zone is an invisible box spanning the dock, there only to centre its label
+   chip; it lets the pointer through so a panel under it stays draggable. The
+   chip is the button. */
 .le-zone {
   position: absolute;
-  pointer-events: auto;
+  pointer-events: none;
   display: grid;
   place-items: center;
-  border: 2px dashed var(--primary);
-  border-radius: var(--r-lg);
-  background: color-mix(in srgb, var(--primary) 12%, transparent);
   color: var(--text);
-  cursor: pointer;
-  transition: background var(--t-fast), border-color var(--t-fast);
-}
-.le-zone:hover,
-.le-zone:focus-visible {
-  background: color-mix(in srgb, var(--primary) 30%, transparent);
-  border-style: solid;
-  outline: none;
-}
-.le-zone:hover .le-zone-label,
-.le-zone:focus-visible .le-zone-label {
-  transform: scale(1.04);
-}
-/* The placement the panel already occupies: solid, calm, not an invitation. */
-.le-zone.current {
-  border-style: solid;
-  background: color-mix(in srgb, var(--primary) 6%, transparent);
-  cursor: default;
-}
-.le-zone.current:hover {
-  background: color-mix(in srgb, var(--primary) 6%, transparent);
-}
-.le-zone.current .le-zone-hint {
-  color: var(--text-dim);
 }
 
 .le-zone-label {
+  pointer-events: auto;
+  cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -198,7 +224,13 @@
   border: 1px solid var(--glass-border);
   box-shadow: var(--elev-1);
   white-space: nowrap;
-  transition: transform var(--t-fast);
+  transition: transform var(--t-fast), border-color var(--t-fast);
+}
+.le-zone-label:hover,
+.le-zone-label:focus-visible {
+  transform: scale(1.04);
+  border-color: var(--primary);
+  outline: none;
 }
 .le-zone-name {
   font-size: var(--fs-sm);
@@ -245,38 +277,29 @@
   right: var(--s-5);
 }
 
-/* ---- search track: the continuous line the bar slides along ---- */
-.le-track {
+/* ---- resize grip: parked on the focused panel's bottom-right corner ---- */
+.le-grip {
   position: absolute;
-  left: 50%;
-  top: 0;
-  bottom: 0;
-  width: 220px;
-  transform: translateX(-50%);
+  width: 22px;
+  height: 22px;
+  margin: -11px 0 0 -11px; /* centred on the corner */
   pointer-events: auto;
-  cursor: pointer;
-  /* the rail itself is a hairline; the wide box is just an easy click target */
-  background: linear-gradient(
-      to right,
-      transparent calc(50% - 1px),
-      color-mix(in srgb, var(--primary) 70%, transparent) calc(50% - 1px),
-      color-mix(in srgb, var(--primary) 70%, transparent) calc(50% + 1px),
-      transparent calc(50% + 1px)
-    )
-    no-repeat;
-}
-.le-track:hover {
-  background-color: color-mix(in srgb, var(--primary) 8%, transparent);
-}
-.le-track-marker {
-  position: absolute;
-  left: 50%;
-  width: 120px;
-  height: 3px;
-  border-radius: 999px;
+  cursor: nwse-resize;
+  touch-action: none;
+  border-radius: 50%;
   background: var(--primary);
-  transform: translate(-50%, -50%);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 25%, transparent);
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 30%, transparent), var(--elev-1);
+  transition: transform var(--t-fast);
+}
+.le-grip:hover,
+.le-grip.active {
+  transform: scale(1.2);
+}
+.le-bar-scale {
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
 }
 
 /* ---- corner buttons: pencil, swapped for the stepper + confirm/cancel ---- */
