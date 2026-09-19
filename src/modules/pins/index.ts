@@ -615,6 +615,12 @@ function persistOrder(): void {
   ctx.saveSettings({ pins: { boards: newBoards } });
 }
 
+// Everything render() reads from settings: the pins block, plus whether the
+// board switcher is expanded.
+function wallKey(): string {
+  return JSON.stringify([ctx.settings.pins, ctx.settings.ui.pinsBoardsOpen]);
+}
+
 // ---- settings schema ----
 const ROTATION_OPTS = [
   { value: 'off', label: 'Off' },
@@ -731,7 +737,14 @@ export const pins: DashboardModule = {
       });
     };
     window.addEventListener('resize', onResize);
+    // Rebuild only when something the wall shows actually changed. Every other
+    // save (minimizing the clock, ticking a task…) would otherwise tear down and
+    // re-create every tile, flashing the wall and restarting the panorama.
+    let last = wallKey();
     unsub = c.bus.on('settings-changed', () => {
+      const key = wallKey();
+      if (key === last) return;
+      last = key;
       if (host) render();
     });
   },

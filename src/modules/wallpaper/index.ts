@@ -74,8 +74,18 @@ export const wallpaper: DashboardModule = {
       const dataUrl = await fileToDataUrl(file);
       await ctx.storage.set(STORAGE_KEY, dataUrl);
       await ctx.saveSettings({ wallpaper: { mode: 'upload' } });
+      // A second upload leaves settings.wallpaper unchanged (already 'upload'),
+      // so the gate below skips it — repaint for the new image explicitly.
+      if (layer) paint();
     });
+    // Repaint only when the wallpaper settings changed. paint() starts from the
+    // bare colour and fades the image back in once it loads, so running it on
+    // every unrelated save (e.g. minimizing the clock) flashed the colour.
+    let last = JSON.stringify(ctx.settings.wallpaper);
     ctx.bus.on('settings-changed', () => {
+      const key = JSON.stringify(ctx.settings.wallpaper);
+      if (key === last) return;
+      last = key;
       if (layer) paint();
     });
   },
