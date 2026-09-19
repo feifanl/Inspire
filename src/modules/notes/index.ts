@@ -94,11 +94,14 @@ function toggleComposer(): void {
     }),
   );
 
-  const save = () => {
+  const save = async () => {
     const text = textarea.value.trim();
     if (!text) return;
-    items = addNote(items, text, color);
-    saveNotes(ctx, items);
+    // Re-read storage first: `items` is only a boot-time snapshot for the badge,
+    // and the board saves drags/resizes (or another tab adds notes) without
+    // touching it, so writing it back would undo all of those.
+    items = addNote(await loadNotes(ctx), text, color);
+    await saveNotes(ctx, items);
     closeComposer();
     renderButtons();
     showToast(items[0]);
