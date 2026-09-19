@@ -535,7 +535,10 @@ function beginDragAt(idx: number, cx: number, cy: number): void {
   if (panoramaMode) rebuildStripLive();
   else rebuildWall();
   window.addEventListener('pointermove', onDragMove);
-  window.addEventListener('pointerup', endDrag, { once: true });
+  // pointercancel too: a trackpad/touch gesture the browser takes over never
+  // sends pointerup, which would strand the ghost and the dimmed tile.
+  window.addEventListener('pointerup', endDrag);
+  window.addEventListener('pointercancel', endDrag);
 }
 
 // Direct press on a pin → grab immediately.
@@ -567,6 +570,8 @@ function onDragMove(e: PointerEvent): void {
 
 function endDrag(): void {
   window.removeEventListener('pointermove', onDragMove);
+  window.removeEventListener('pointerup', endDrag);
+  window.removeEventListener('pointercancel', endDrag);
   if (ghost) {
     ghost.remove();
     ghost = null;
@@ -577,14 +582,17 @@ function endDrag(): void {
     rebuildRaf = 0;
   }
 
-  // Panorama: order was re-packed live during the drag. Persist if it changed
-  // (re-render restarts the drift); otherwise resume the paused drift.
+  // Panorama: order was re-packed live during the drag. Always re-pack once
+  // more with no tile marked, or the pressed tile keeps its dimmed
+  // .pin-dragging look (wallpaper showing through) after a plain click or an
+  // unsaveable move. Then persist if the order changed (the re-render restarts
+  // the drift), else resume the paused drift.
   if (panoramaMode) {
     const moved = dragMoved;
     draggingIdx = -1;
     dragMoved = false;
-    if (moved) persistOrder();
-    else panoramaAnim?.play();
+    rebuildStripLive();
+    if (!moved || !persistOrder()) panoramaAnim?.play();
     return;
   }
   const moved = dragMoved;
@@ -602,17 +610,19 @@ function endDrag(): void {
 }
 
 // Write the live order back to the editable board, preserving any pins that
-// weren't laid out (failed to load, or beyond MAX_TILES) at the tail.
-function persistOrder(): void {
+// weren't laid out (failed to load, or beyond MAX_TILES) at the tail. Returns
+// false when there's no single board to write to (nothing saved).
+function persistOrder(): boolean {
   const p = ctx.settings.pins;
   const board = p.boards.find((b) => b.id === editableBoardId);
-  if (!board) return;
+  if (!board) return false;
   const ordered = currentLoaded.map((l) => l.pin);
   const shown = new Set(ordered);
   const rest = board.pins.filter((pin) => !shown.has(pin));
   const newPins = [...ordered, ...rest];
   const newBoards = p.boards.map((b) => (b.id === board.id ? { ...b, pins: newPins } : b));
   ctx.saveSettings({ pins: { boards: newBoards } });
+  return true;
 }
 
 // Everything render() reads from settings: the pins block, plus whether the
