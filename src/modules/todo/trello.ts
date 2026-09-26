@@ -18,11 +18,17 @@ function auth(cfg: TrelloConfig): string {
 interface TrelloLabel {
   name?: string;
 }
+interface TrelloAttachment {
+  id: string;
+  url: string;
+  isUpload?: boolean;
+}
 interface TrelloCard {
   id: string;
   name: string;
   desc?: string;
   shortUrl?: string;
+  attachments?: TrelloAttachment[];
   labels?: TrelloLabel[];
   dueComplete?: boolean; // Trello's card-level "done" checkmark (needs a due date to toggle in-app)
   pos?: number; // Trello's fractional card order within its list
@@ -73,10 +79,17 @@ function priorityFromLabels(labels: TrelloLabel[] | undefined): Priority {
   return 'med';
 }
 
+// A card's sidebar link lives in Trello as a URL attachment: the most recent
+// non-upload one. Absent → the link falls back to the card's own shortUrl.
+function linkAttachment(atts: TrelloAttachment[] | undefined): TrelloAttachment | undefined {
+  return (atts ?? []).filter((a) => !a.isUpload && a.url).pop();
+}
+
 // Pull open cards from the configured list → Todo[]. null on any failure.
 export async function trelloPull(cfg: TrelloConfig): Promise<Todo[] | null> {
   try {
-    const res = await fetch(`${BASE}/lists/${cfg.listId}/cards?filter=open&${auth(cfg)}`, {
+    const q = `filter=open&attachments=true&attachment_fields=url,isUpload&${auth(cfg)}`;
+    const res = await fetch(`${BASE}/lists/${cfg.listId}/cards?${q}`, {
       signal: AbortSignal.timeout(TIMEOUT),
     });
     if (!res.ok) return null;
@@ -89,7 +102,7 @@ export async function trelloPull(cfg: TrelloConfig): Promise<Todo[] | null> {
       createdAt: Date.now(),
       pos: typeof c.pos === 'number' ? c.pos : i + 1,
       desc: c.desc || undefined,
-      link: c.shortUrl || undefined,
+      link: linkAttachment(c.attachments)?.url || c.shortUrl || undefined,
       trelloCardId: c.id,
     }));
   } catch {
@@ -111,6 +124,47 @@ export async function trelloCreate(cfg: TrelloConfig, todo: Todo): Promise<strin
     return card.id ?? null;
   } catch {
     return null;
+  }
+}
+
+// Push a row's text/desc/link onto its card. true only when every write landed,
+// so the caller keeps the row dirty (and retries on the next sync) otherwise.
+export async function trelloPushEdit(cfg: TrelloConfig, cardId: string, todo: Todo): Promise<boolean> {
+  try {
+    const card = `${BASE}/cards/${cardId}`;
+    const put = await fetch(`${card}?${auth(cfg)}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: todo.text, desc: todo.desc ?? '' }),
+      signal: AbortSignal.timeout(TIMEOUT),
+    });
+    if (!put.ok) return false;
+
+    // Link: replace the attachment the sidebar shows. A link equal to what's
+    // already shown (incl. the card's own shortUrl fallback) is a no-op.
+    const info = await fetch(`${card}?fields=shortUrl&attachments=true&attachment_fields=url,isUpload&${auth(cfg)}`, {
+      signal: AbortSignal.timeout(TIMEOUT),
+    });
+    if (!info.ok) return false;
+    const { shortUrl, attachments } = (await info.json()) as TrelloCard;
+    const cur = linkAttachment(attachments);
+    const link = todo.link ?? '';
+    if (link === (cur?.url ?? shortUrl ?? '')) return true;
+    if (cur) {
+      const del = await fetch(`${card}/attachments/${cur.id}?${auth(cfg)}`, {
+        method: 'DELETE',
+        signal: AbortSignal.timeout(TIMEOUT),
+      });
+      if (!del.ok) return false;
+    }
+    if (!link || link === shortUrl) return true; // cleared → shortUrl fallback
+    const add = await fetch(`${card}/attachments?url=${encodeURIComponent(link)}&${auth(cfg)}`, {
+      method: 'POST',
+      signal: AbortSignal.timeout(TIMEOUT),
+    });
+    return add.ok;
+  } catch {
+    return false;
   }
 }
 

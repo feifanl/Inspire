@@ -50,9 +50,14 @@ export function reorderTodo(state: TodoState, id: string, pos: number): TodoStat
   return { ...state, items: state.items.map((t) => (t.id === id ? { ...t, pos } : t)) };
 }
 
+// Marks the item dirty so the edit is pushed to Trello (and survives the next
+// mirror) even if the first push fails.
 export type TodoPatch = Partial<Pick<Todo, 'text' | 'desc' | 'link' | 'priority'>>;
 export function updateTodo(state: TodoState, id: string, patch: TodoPatch): TodoState {
-  return { ...state, items: state.items.map((t) => (t.id === id ? { ...t, ...patch } : t)) };
+  return {
+    ...state,
+    items: state.items.map((t) => (t.id === id ? { ...t, ...patch, dirty: true as const } : t)),
+  };
 }
 
 export function removeTodo(state: TodoState, id: string): TodoState {

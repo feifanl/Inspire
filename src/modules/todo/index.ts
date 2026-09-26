@@ -18,6 +18,7 @@ import {
   trelloDelete,
   trelloListsForBoard,
   trelloPull,
+  trelloPushEdit,
   trelloSetDone,
   trelloSetPos,
   weekdayListId,
@@ -141,6 +142,14 @@ async function syncFromTrello(): Promise<void> {
       if (id) item.trelloCardId = id;
     }
   }
+  // Likewise push unsent text/desc/link edits. `cards` predates these pushes,
+  // so edited rows keep their local fields in the mirror below either way.
+  const edited = new Set<string>();
+  for (const item of state.items) {
+    if (!item.dirty || !item.trelloCardId) continue;
+    edited.add(item.trelloCardId);
+    if (await trelloPushEdit(cfg, item.trelloCardId, item)) delete item.dirty;
+  }
   // Trello is the source of truth for membership, text, desc, link, order and
   // done state. Rows we already had keep their local id (so an open detail pane
   // survives the refresh); cards deleted or moved away in Trello disappear here.
@@ -149,7 +158,10 @@ async function syncFromTrello(): Promise<void> {
   );
   const mirrored = cards.map((card) => {
     const prev = prevByCard.get(card.trelloCardId!);
-    return prev ? { ...card, id: prev.id, createdAt: prev.createdAt } : card;
+    if (!prev) return card;
+    const row = { ...card, id: prev.id, createdAt: prev.createdAt };
+    if (!edited.has(card.trelloCardId!)) return row;
+    return { ...row, text: prev.text, desc: prev.desc, link: prev.link, dirty: prev.dirty };
   });
   // A row whose create failed (write still offline) stays local until it syncs.
   const unsynced = state.items.filter((i) => !i.trelloCardId);
@@ -225,7 +237,29 @@ async function commit(next: TodoState, refocus = false): Promise<void> {
 }
 
 function update(id: string, patch: TodoPatch): void {
-  commit(updateTodo(state, id, patch));
+  commit(updateTodo(state, id, patch)).then(() => pushEdit(id));
+}
+
+// Persist keystrokes without a rebuild (which would steal focus), so reloading
+// before the field blurs keeps the edit. The change handler commits + pushes.
+function draft(id: string, patch: TodoPatch): void {
+  state = updateTodo(state, id, patch);
+  saveTodos(state);
+}
+
+// Push a row's text/desc/link to its card; clear the dirty mark once Trello has
+// it. Offline / no card yet → stays dirty and syncFromTrello retries.
+async function pushEdit(id: string): Promise<void> {
+  const cfg = trelloCfg();
+  const sent = state.items.find((i) => i.id === id);
+  if (!cfg || !sent?.trelloCardId || !sent.dirty) return;
+  const ok = await trelloPushEdit(cfg, sent.trelloCardId, sent);
+  // A newer edit may have landed mid-push; only clear if Trello has the latest.
+  const cur = state.items.find((i) => i.id === id);
+  if (ok && cur?.dirty && cur.text === sent.text && cur.desc === sent.desc && cur.link === sent.link) {
+    delete cur.dirty;
+    await saveTodos(state);
+  }
 }
 
 // Confetti burst + pill message over the card when every task is done.
@@ -325,9 +359,12 @@ function rebuild(): void {
       if (!cfg) return;
       const item = state.items[state.items.length - 1]; // addTodo appends
       trelloCreate(cfg, item).then((id) => {
-        if (id) {
-          item.trelloCardId = id;
+        // Re-find: an edit during the create replaced the row object.
+        const cur = state.items.find((i) => i.id === item.id);
+        if (id && cur) {
+          cur.trelloCardId = id;
           saveTodos(state);
+          pushEdit(cur.id); // no-op unless edited while the create was in flight
         }
       });
     });
@@ -441,6 +478,7 @@ function rebuild(): void {
         class: 'todo-edit-text',
         type: 'text',
         value: t.text,
+        onInput: (e: Event) => draft(t.id, { text: (e.target as HTMLInputElement).value.trim() || t.text }),
         onChange: (e: Event) => {
           const v = (e.target as HTMLInputElement).value.trim();
           update(t.id, { text: v || t.text });
@@ -451,6 +489,7 @@ function rebuild(): void {
         rows: 3,
         placeholder: 'Description…',
         value: t.desc ?? '',
+        onInput: (e: Event) => draft(t.id, { desc: (e.target as HTMLTextAreaElement).value }),
         onChange: (e: Event) => update(t.id, { desc: (e.target as HTMLTextAreaElement).value }),
       });
       const linkBox = h('input', {
@@ -458,6 +497,7 @@ function rebuild(): void {
         type: 'text',
         placeholder: 'https://…',
         value: t.link ?? '',
+        onInput: (e: Event) => draft(t.id, { link: normalizeLink((e.target as HTMLInputElement).value) }),
         onChange: (e: Event) => update(t.id, { link: normalizeLink((e.target as HTMLInputElement).value) }),
       });
       const detail = h(

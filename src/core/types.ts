@@ -203,6 +203,7 @@ export interface Todo {
   desc?: string; // free-text description (Trello-style)
   link?: string; // single URL, opened in a new tab
   trelloCardId?: string; // present iff synced
+  dirty?: true; // text/desc/link edited locally, not yet confirmed pushed to Trello
 }
 
 export interface TodoState {
