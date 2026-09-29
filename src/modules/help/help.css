@@ -60,6 +60,11 @@
   font-family: var(--font-display);
   font-size: var(--fs-xl);
 }
+.help-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
 .help-close {
   font-size: var(--fs-md);
   line-height: 1;

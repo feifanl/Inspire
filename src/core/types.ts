@@ -13,7 +13,7 @@ export interface TypedStorage {
 }
 
 // ---------- Event bus ----------
-export type BusEvent = 'settings-changed' | 'open-settings' | 'open-notes-board';
+export type BusEvent = 'settings-changed' | 'open-settings' | 'open-notes-board' | 'start-tour';
 
 export interface EventBus {
   on(event: BusEvent, cb: (payload?: unknown) => void): () => void;

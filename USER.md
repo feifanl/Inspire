@@ -34,7 +34,7 @@ You never *need* the keyboard.
 - **Collapse tabs:** the quote, todo, and life-clock panels each have a small arrow tab to hide or show them. The arrow points down while the panel is put away and up to fold it back.
 - **Move panels:** the pencil button (bottom-right, left of `?`) opens move mode. It works one panel at a time: every other panel, icon, and corner button disappears, the toolbar names the panel you're moving (`Quote · 1/4`), and the `‹` `›` buttons step to the previous/next panel. The quote, task list, search bar, and life clock can each be **dragged anywhere** on the screen, and **resized** with the round grip on the panel's bottom-right corner (50%–200%; double-click the grip for 100%). The toolbar shows the current size, and **Reset** puts the panel back in its default spot at its default size. The quote and the task list also show labelled zones — click one to dock the panel there. Clicks anywhere else are ignored while you're editing. Nothing is saved until you press the green check (or `Enter`); the red × (or `Esc`) throws the changes away.
 - **Settings:** the gear button (bottom-left). Its header holds the theme and liquid-glass toggles.
-- **Help:** the `?` button (bottom-right) opens this guide.
+- **Help:** the `?` button (bottom-right) opens this guide. **Take the tour** at its top replays the guided walkthrough shown on first install (`←` `→` to step, `Esc` to leave).
 
 ---
 
@@ -45,7 +45,7 @@ Open with the gear button.
 ### Header buttons
 
 - **Theme** - dark or light. Defaults to dark. Sticks across restarts.
-- **Liquid glass** - frosted translucent surfaces (cards, panel, notes board) vs flat opaque ones. 0Defaults to on.
+- **Liquid glass** - frosted translucent surfaces (cards, panel, notes board) vs flat opaque ones. Defaults to on.
 
 ### Life clock
 

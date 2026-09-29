@@ -33,6 +33,11 @@ async function buildMenus(): Promise<void> {
 }
 
 chrome.runtime.onInstalled.addListener(buildMenus);
+// Fresh installs get the guided tour on their first new tab (modules/tour);
+// updates don't, so existing users aren't walked through what they know.
+chrome.runtime.onInstalled.addListener(({ reason }) => {
+  if (reason === 'install') chrome.storage.local.set({ tourPending: true });
+});
 chrome.runtime.onStartup.addListener(buildMenus);
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area === 'local' && changes.settings) buildMenus();
