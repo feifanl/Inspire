@@ -3,6 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Send no Referer: Google Photos' image host throttles (429) requests
+         referred from other origins, and it keeps pin hotlinks working too. -->
+    <meta name="referrer" content="no-referrer" />
     <link rel="icon" type="image/png" href="./icons/icon48.png" />
     <title>New Tab</title>
     <style>

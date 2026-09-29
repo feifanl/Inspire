@@ -33,7 +33,7 @@ export interface ModuleContext {
 export interface SettingsField {
   key: string; // dot-path inside Settings, e.g. "lifeclock.birthday"
   label: string;
-  type: 'text' | 'date' | 'number' | 'range' | 'select' | 'toggle' | 'textarea' | 'file' | 'color' | 'list' | 'pins';
+  type: 'text' | 'date' | 'number' | 'range' | 'select' | 'toggle' | 'textarea' | 'file' | 'color' | 'list' | 'pins' | 'action';
   // for select: a static list, or a function computing options from live settings
   // (e.g. one option per pin board, so the list tracks the user's boards)
   options?: { value: string; label: string }[] | ((settings: Settings) => { value: string; label: string }[]);
@@ -49,6 +49,8 @@ export interface SettingsField {
   parse?: (raw: string) => unknown; // textarea/text: string → stored value (e.g. lines → Pin[])
   format?: (val: unknown) => string; // textarea/text: stored value → string for display
   showIf?: (settings: Settings) => boolean; // hide field unless predicate holds
+  run?: () => Promise<string>; // for 'action': button click handler; resolves to a status line
+  status?: () => Promise<string>; // for 'action': status line shown before the first click
 }
 
 export interface DashboardModule {
@@ -69,6 +71,8 @@ export type QuotePos = 'top' | 'center' | 'bottom';
 export type SideLR = 'left' | 'right';
 // Panels the layout editor can drag freely and scale.
 export type PanelId = 'quote' | 'todo' | 'search' | 'lifeclock';
+// 'tab' = a new photo on every new tab.
+export type AlbumRotation = 'tab' | 'interval' | 'daily' | 'weekly';
 // A panel's free placement. x/y are its anchor point as % of the screen (see
 // ANCHOR in modules/layout); both null = sits in its normal dock. scale is a
 // uniform zoom factor, 1 = default size.
@@ -87,10 +91,16 @@ export interface Settings {
     defaultView: LifeView; // default "month"
   };
   wallpaper: {
-    mode: 'color' | 'url' | 'upload';
+    mode: 'color' | 'url' | 'upload' | 'album';
     color: string; // default "#0d1117"
     url: string; // remote image URL, mode "url"
     dim: number; // 0–0.8 overlay dim, default 0.35
+    albumUrl: string; // Google Photos shared-album link, mode "album"
+    albumRotation: AlbumRotation; // how often the album photo changes
+    albumIntervalMinutes: number; // used iff albumRotation === 'interval'
+    captionDate: boolean; // album mode: show the date the photo was taken
+    captionDesc: boolean; // album mode: show the photo's Google Photos description
+    captionFull: boolean; // album mode: show the whole description, not clamped to 3 lines
   };
   todo: {
     trelloEnabled: boolean;
@@ -149,7 +159,18 @@ export const DEFAULT_SETTINGS: Settings = {
   version: 1,
   theme: 'dark',
   lifeclock: { birthday: null, lifeExpectancyYears: 80, defaultView: 'month' },
-  wallpaper: { mode: 'color', color: '#0d1117', url: '', dim: 0.35 },
+  wallpaper: {
+    mode: 'color',
+    color: '#0d1117',
+    url: '',
+    dim: 0.35,
+    albumUrl: '',
+    albumRotation: 'tab',
+    albumIntervalMinutes: 60,
+    captionDate: true,
+    captionDesc: true,
+    captionFull: false,
+  },
   todo: { trelloEnabled: false, trelloKey: '', trelloToken: '', trelloListId: '', trelloBoardId: '', trelloAutoWeekday: false },
   quote: {
     enabled: true,

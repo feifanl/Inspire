@@ -1,0 +1,59 @@
+/* Album photo caption: bottom-right, stacked just above the help / layout
+   buttons. Sits straight on the photo, so it's always light text + shadow. */
+.wp-caption {
+  position: fixed;
+  right: var(--s-5);
+  bottom: calc(var(--s-5) + 40px + var(--s-3));
+  max-width: 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--s-1);
+  color: #fff;
+  text-align: right;
+  text-shadow: 0 1px 3px rgb(0 0 0 / 0.75);
+  font-size: var(--fs-sm);
+  pointer-events: auto; /* parent .slot-overlay is pointer-events:none */
+}
+.wp-caption[hidden] { display: none; }
+.wp-caption-desc {
+  margin: 0;
+  line-height: 1.4;
+  /* long descriptions clamp to three lines; hover shows all of it */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.wp-caption:hover .wp-caption-desc,
+.wp-caption-desc.full {
+  -webkit-line-clamp: unset;
+  /* a very long description scrolls instead of running off the top */
+  max-height: calc(50vh / var(--z, 1));
+  overflow-y: auto;
+}
+.wp-caption-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+.wp-caption-date {
+  font-size: var(--fs-xs);
+  letter-spacing: 0.02em;
+  opacity: 0.85;
+}
+.wp-caption-next {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  line-height: 1;
+  font-size: var(--fs-md);
+  color: #fff;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 0.35);
+  border: 1px solid rgb(255 255 255 / 0.3);
+  opacity: 0;
+  transition: opacity var(--t-fast);
+}
+.wp-caption:hover .wp-caption-next,
+.wp-caption-next:focus-visible { opacity: 1; }

@@ -57,9 +57,12 @@ The life clock is a reminder that time is finite, not a reason to spiral. Watch 
 
 ### Wallpaper
 
-- **Background** - Solid color, Image URL, or Uploaded image. Defaults to Solid color.
+- **Background** - Solid color, Image URL, Uploaded image, or Google Photos album. Defaults to Solid color.
 - **Color** - the solid color, and the instant fallback behind any image. Defaults to `#0d1117`.
 - **Image URL** - a remote image, used in Image URL mode. A bad URL quietly falls back to the color.
+- **Shared album link** - Google Photos album mode. In Google Photos, open an album, then **Share → Create link**, and paste the link here. Press **Sync now** once (Chrome asks for permission to read Google Photos). After that, the album re-syncs on its own every few hours, so photos you add from your phone show up without touching settings.
+- **Change photo** - Every new tab, Every N minutes, Daily, or Weekly. Defaults to Every new tab. Photos are shuffled, and every photo shows once before any repeats.
+- **Show date taken**, **Show description** - both on by default. A small caption in the bottom-right shows when the photo was taken and its Google Photos description (hover to read a long one, or turn on **Show full description** to always show all of it). Its `›` button skips to the next photo. Location isn't available: Google hides it from shared-album links.
 - **Dim overlay** - 0 to 0.8 black overlay over the image so text stays readable. Defaults to 0.35.
 - **Upload image** - pick a local image (up to 10 MB). It's downscaled to 2560 px, re-encoded as JPEG, and stored locally.
 
@@ -121,6 +124,7 @@ The pencil button (bottom-right) does more: drag any panel anywhere and resize i
 - The only outbound network calls are:
   - **Trello** - only if you enable sync and enter credentials.
   - **ZenQuotes** - only if the quote "fetch online" toggle is on.
+  - **Google Photos** - only in Google Photos album mode, to read the shared album you linked. Requests are sent without your Google sign-in, so it sees only what anyone with the link can see.
 - With both off, or offline, the dashboard still works fully: fonts are bundled, the wallpaper paints its color first, and quotes fall back to the bundled set.
 - The right-click "Add image to pins board" feature uses the `contextMenus` permission and a small background worker. It reads only the URL of the image you right-click and writes it to your local boards. No page content is collected and nothing is uploaded.
 

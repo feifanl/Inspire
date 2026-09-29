@@ -7,5 +7,6 @@
   "background": { "service_worker": "background.js", "type": "module" },
   "permissions": ["storage", "unlimitedStorage", "contextMenus"],
   "host_permissions": ["https://api.trello.com/*", "https://zenquotes.io/*"],
+  "optional_host_permissions": ["https://photos.app.goo.gl/*", "https://photos.google.com/*"],
   "icons": { "16": "icons/icon16.png", "48": "icons/icon48.png", "128": "icons/icon128.png" }
 }

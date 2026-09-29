@@ -334,6 +334,29 @@ export function mountSettingsPanel(ctx: ModuleContext): void {
       return wrap;
     }
 
+    if (field.type === 'action') {
+      const status = h('p', { class: 'field-help' });
+      field.status?.().then((t) => (status.textContent = t));
+      const btn = h(
+        'button',
+        {
+          class: 'field-action',
+          onClick: () => {
+            if (!field.run) return;
+            btn.disabled = true;
+            status.textContent = 'Working…';
+            field
+              .run()
+              .then((t) => (status.textContent = t))
+              .catch((er) => (status.textContent = er?.message ?? 'Failed.'))
+              .finally(() => (btn.disabled = false));
+          },
+        },
+        field.label,
+      );
+      return h('div', { class: 'field' }, btn, status, field.help ? h('p', { class: 'field-help' }, field.help) : null);
+    }
+
     const cur = getByPath(ctx.settings, field.key);
     // Toggles/selects can drive showIf on sibling fields → rebuild; scalar edits keep focus.
     const rerender = field.type === 'toggle' || field.type === 'select';

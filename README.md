@@ -15,7 +15,7 @@ The extension replaces the default new tab with a **life clock**, **daily todos*
 - **Quote** - a daily quote from [ZenQuotes](https://zenquotes.io) with included offline quotes (philosophy, self-help, morality). Write your own quotes too — mixed into the rotation, or shown on their own.
 - **Pins wall** - a full Pinterest-style pins board of your own images, grouped into boards. Right-click any image on the web to add it. Auto-rotate boards or slowly drift through pins with panorama scroll.
 - **Notes** - add sticky notes so you can jot down any idea; open on a full-screen interactive board.
-- **Wallpaper** - set a wallpaper -- solid color, image URL, or a locally uploaded image.
+- **Wallpaper** - set a wallpaper -- solid color, image URL, a locally uploaded image, or a Google Photos shared album that shuffles through on a schedule, with date and description captions.
 - **Move mode** - the pencil button opens the layout editor: `‹` `›` step through one panel at a time, with everything else off screen — drag the quote, tasks, search bar, or life clock anywhere and resize it from its corner grip, or snap the quote/tasks back into their docks. Green check keeps it, red × throws it away.
 - **Themes** - dark / light, plus a liquid-glass toggle.
 
@@ -98,6 +98,6 @@ Modules self-register in [src/modules/index.ts](src/modules/index.ts) and mount 
 
 ## Privacy
 
-All data is stored in `chrome.storage.local` on your machine. The only outbound requests are **Trello** (*if* you enable sync and enter credentials) and **ZenQuotes** (*if* the daily-quote fetch is on).
+All data is stored in `chrome.storage.local` on your machine. The only outbound requests are **Trello** (*if* you enable sync and enter credentials), **ZenQuotes** (*if* the daily-quote fetch is on), and **Google Photos** (*if* you link a shared album; sent without your Google sign-in).
 
 With both off, the dashboard is still fully functional, with bundled fonts, a solid wallpaper color, and a bundled quote pool. The right-click "Add image to pins board" feature reads only the URL of the image you click; no page content is collected or uploaded.
