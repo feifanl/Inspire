@@ -464,7 +464,7 @@ function cancel(): void {
 // cursor fades each one in as it gets close: full strength within NEAR_FULL px
 // of the handle's box, gone again past NEAR_FADE. The distance drives --near-op,
 // which layout.css reads as the handle's opacity.
-const HANDLE_SEL = '.quote-tab:not(.open), .todo-handle, .lc-pill';
+const HANDLE_SEL = '.quote-tab, .todo-handle, .lc-pill';
 const NEAR_FULL = 56;
 const NEAR_FADE = 190;
 
@@ -614,7 +614,7 @@ export const layout: DashboardModule = {
       key: 'ui.hideCollapsed',
       label: 'Hide collapsed handles',
       type: 'toggle',
-      help: 'Fades out the tab or handle a collapsed panel leaves behind. It stays where it was — hover the spot to bring it back.',
+      help: 'Fades out the tab or handle a collapsed panel leaves behind, and the quote tab under an open quote. It stays where it was — hover the spot to bring it back.',
     },
   ],
 

@@ -112,7 +112,7 @@ The board is a free canvas: **drag any note by its paper to move it anywhere**, 
 
 - **Quote position** - Top, Center, or Bottom. Defaults to Bottom. Center puts the quote in the middle column, under the life clock.
 - **Tasks side** - Left or Right edge. Defaults to Left. The collapse arrows and the pins board switcher flip with it.
-- **Hide collapsed handles** - off by default. On, the tab or handle a collapsed panel leaves behind (quote tab, tasks handle, life-clock pill) fades out of sight. It stays exactly where it was and still works: bring the cursor anywhere near it and it fades back in, brightening as you get closer, so you never have to hunt for the exact pixel.
+- **Hide collapsed handles** - off by default. On, the tab or handle a collapsed panel leaves behind (quote tab, tasks handle, life-clock pill) fades out of sight, and so does the quote tab under an open quote. It stays exactly where it was and still works: bring the cursor anywhere near it and it fades back in, brightening as you get closer, so you never have to hunt for the exact pixel.
 
 The pencil button (bottom-right) does more: drag any panel anywhere and resize it, then press the green check to keep it. A panel you've dragged off its dock ignores Quote position / Tasks side until you Reset it or click a dock zone.
 

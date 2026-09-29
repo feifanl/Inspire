@@ -367,15 +367,16 @@
    with no way back. --near-op is written by the proximity watcher in
    modules/layout/index.ts: the handle fades up as the cursor approaches, rather
    than only when it is directly on top of it. Hover and keyboard focus force it
-   fully visible, which also covers touch (no pointermove, no --near-op). */
-:root[data-hide-collapsed='on'] .quote-tab:not(.open),
+   fully visible, which also covers touch (no pointermove, no --near-op).
+   The quote tab fades in both states: under the open card as well. */
+:root[data-hide-collapsed='on'] .quote-tab,
 :root[data-hide-collapsed='on'] .todo-handle,
 :root[data-hide-collapsed='on'] .lc-pill {
   opacity: var(--near-op, 0);
   transition: opacity var(--t-fast);
 }
-:root[data-hide-collapsed='on'] .quote-tab:not(.open):hover,
-:root[data-hide-collapsed='on'] .quote-tab:not(.open):focus-visible,
+:root[data-hide-collapsed='on'] .quote-tab:hover,
+:root[data-hide-collapsed='on'] .quote-tab:focus-visible,
 :root[data-hide-collapsed='on'] .todo-handle:hover,
 :root[data-hide-collapsed='on'] .todo-handle:focus-visible,
 :root[data-hide-collapsed='on'] .lc-pill:hover,
