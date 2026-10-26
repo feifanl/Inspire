@@ -3,6 +3,7 @@
 // user's current boards. Clicking appends the image URL to the chosen board;
 // the open new-tab picks it up via chrome.storage.onChanged.
 import { DEFAULT_SETTINGS, type PinBoard, type Settings } from './core/types';
+import { feedUrls, hasCalendarAccess, syncCalendars } from './modules/calendar/sync';
 
 const PARENT = 'add-to-pins';
 const NEW_BOARD = 'pin-board:__new__';
@@ -76,4 +77,29 @@ chrome.contextMenus.onClicked.addListener(async (info) => {
     pins: { ...s.pins, boards, enabled: true, activeBoardId: s.pins.activeBoardId ?? boardId },
   };
   await chrome.storage.local.set({ settings: next });
+});
+
+// Calendar: refresh the iCal cache every 15 minutes so a new tab always opens
+// on recent events without fetching anything itself (modules/calendar).
+const CAL_ALARM = 'calendar-sync';
+
+async function syncCalendarIfOn(): Promise<void> {
+  const urls = feedUrls((await getSettings()).calendar?.urls);
+  if (!urls.length || !(await hasCalendarAccess())) return;
+  await syncCalendars(urls).catch(() => undefined);
+}
+
+function ensureCalendarAlarm(): void {
+  chrome.alarms.get(CAL_ALARM, (a) => {
+    if (!a) chrome.alarms.create(CAL_ALARM, { periodInMinutes: 15 });
+  });
+}
+
+chrome.runtime.onInstalled.addListener(ensureCalendarAlarm);
+chrome.runtime.onStartup.addListener(() => {
+  ensureCalendarAlarm();
+  syncCalendarIfOn();
+});
+chrome.alarms.onAlarm.addListener((a) => {
+  if (a.name === CAL_ALARM) syncCalendarIfOn();
 });

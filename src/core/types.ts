@@ -71,6 +71,7 @@ export type QuotePos = 'top' | 'center' | 'bottom';
 export type SideLR = 'left' | 'right';
 // Panels the layout editor can drag freely and scale.
 export type PanelId = 'quote' | 'todo' | 'search' | 'lifeclock';
+export type SidebarTab = 'tasks' | 'today';
 // 'tab' = a new photo on every new tab.
 export type AlbumRotation = 'tab' | 'interval' | 'daily' | 'weekly';
 // A panel's free placement. x/y are its anchor point as % of the screen (see
@@ -109,6 +110,9 @@ export interface Settings {
     trelloListId: string;
     trelloBoardId: string; // board scanned when auto-weekday is on
     trelloAutoWeekday: boolean; // pick the list whose name matches today's weekday
+  };
+  calendar: {
+    urls: string[]; // Google Calendar secret iCal links; non-empty → sidebar gets a Today tab
   };
   quote: {
     enabled: boolean;
@@ -152,6 +156,7 @@ export interface Settings {
     pinsBoardsOpen: boolean; // board switcher expanded from its top-right tab
     glass: boolean; // liquid-glass surfaces (false = flat opaque)
     hideCollapsed: boolean; // fade out the tab/handle a collapsed panel leaves behind
+    sidebarTab: SidebarTab; // which sidebar tab shows when a calendar is connected
   };
 }
 
@@ -172,6 +177,7 @@ export const DEFAULT_SETTINGS: Settings = {
     captionFull: false,
   },
   todo: { trelloEnabled: false, trelloKey: '', trelloToken: '', trelloListId: '', trelloBoardId: '', trelloAutoWeekday: false },
+  calendar: { urls: [] },
   quote: {
     enabled: true,
     api: true,
@@ -208,7 +214,7 @@ export const DEFAULT_SETTINGS: Settings = {
     },
   },
   search: { enabled: true, engine: 'google' },
-  ui: { quoteOpen: false, todoHidden: false, clockMinimized: false, pinsBoardsOpen: false, glass: true, hideCollapsed: false },
+  ui: { quoteOpen: false, todoHidden: false, clockMinimized: false, pinsBoardsOpen: false, glass: true, hideCollapsed: false, sidebarTab: 'tasks' },
 };
 
 // ---------- Todo (root storage key "todos") ----------

@@ -24,6 +24,8 @@ import {
   weekdayListId,
   type TrelloConfig,
 } from './trello';
+import { calendarDayView, calendarOn } from '../calendar';
+import type { SidebarTab } from '../../core/types';
 
 let ctx: ModuleContext;
 let host: HTMLElement;
@@ -298,6 +300,44 @@ function rebuild(): void {
     return;
   }
 
+  const hideBtn = h(
+    'button',
+    { class: 'todo-hide', title: 'Hide tasks', 'aria-label': 'Hide tasks', onClick: () => ctx.saveSettings({ ui: { todoHidden: true } }) },
+    onLeft ? '‹' : '›',
+  );
+
+  // A connected calendar splits the sidebar into Tasks | Today tabs; the hide
+  // button moves up onto the tab row so both tabs share it.
+  const calOn = calendarOn(ctx.settings);
+  const tab: SidebarTab = calOn ? ctx.settings.ui.sidebarTab : 'tasks';
+  const sideTab = (id: SidebarTab, label: string) =>
+    h(
+      'button',
+      {
+        class: `side-tab${tab === id ? ' active' : ''}`,
+        onClick: () => {
+          if (tab === id) return;
+          if (id === 'today') resetCalScroll = true;
+          ctx.saveSettings({ ui: { sidebarTab: id } });
+        },
+      },
+      label,
+    );
+  const tabsRow = calOn ? h('div', { class: 'side-tabs' }, sideTab('tasks', 'Tasks'), sideTab('today', 'Today'), hideBtn) : null;
+
+  if (tab === 'today') {
+    const day = calendarDayView();
+    const calCard = h('div', { class: 'card todo todo-cal' }, tabsRow, day.el);
+    if (animateShow) {
+      calCard.classList.add('ui-enter');
+      animateShow = false;
+    }
+    host.replaceChildren(calCard);
+    day.attached(resetCalScroll);
+    resetCalScroll = false;
+    return;
+  }
+
   dateEl = h('div', { class: 'todo-date' }, dateLabel());
   const left = h('div', { class: 'todo-head-left' }, dateEl);
   const headActions = h('div', { class: 'todo-head-actions' });
@@ -306,13 +346,7 @@ function rebuild(): void {
       h('button', { class: 'todo-clear', onClick: () => commit(clearTodos()) }, 'Clear'),
     );
   }
-  headActions.appendChild(
-    h(
-      'button',
-      { class: 'todo-hide', title: 'Hide tasks', 'aria-label': 'Hide tasks', onClick: () => ctx.saveSettings({ ui: { todoHidden: true } }) },
-      onLeft ? '‹' : '›',
-    ),
-  );
+  if (!calOn) headActions.appendChild(hideBtn);
   const header = h('div', { class: 'todo-head' }, left, headActions);
 
   // Manual mode with a board: ‹ › to page through the board's lists.
@@ -519,7 +553,7 @@ function rebuild(): void {
     }
   }
 
-  const cardEl = h('div', { class: 'card todo' }, header, listNav, addRow, list);
+  const cardEl = h('div', { class: 'card todo' }, tabsRow, header, listNav, addRow, list);
   if (animateShow) {
     cardEl.classList.add('ui-enter');
     animateShow = false;
@@ -555,6 +589,9 @@ function trelloSig(): string {
 let lastHidden = false;
 let lastSide: 'left' | 'right' = 'left'; // docked edge, watched for arrow flips
 let animateShow = false; // play enter animation when the card returns from hidden
+let lastTabKey = ''; // calendar connected + active tab, watched to swap panes
+let resetCalScroll = false; // next Today build scrolls to now (tab just opened)
+const tabKey = (): string => `${calendarOn(ctx.settings)}:${ctx.settings.ui.sidebarTab}`;
 
 export const todo: DashboardModule = {
   id: 'todo',
@@ -612,11 +649,16 @@ export const todo: DashboardModule = {
     }, 60_000);
     lastHidden = c.settings.ui.todoHidden;
     lastSide = c.settings.layout.todoSide;
+    lastTabKey = tabKey();
     // Re-sync when Trello config changes; rebuild when the hide toggle flips or
     // the sidebar is docked to the other edge (the arrows point the other way).
     unsub = c.bus.on('settings-changed', () => {
       if (c.settings.layout.todoSide !== lastSide) {
         lastSide = c.settings.layout.todoSide;
+        if (host) rebuild();
+      }
+      if (tabKey() !== lastTabKey) {
+        lastTabKey = tabKey();
         if (host) rebuild();
       }
       if (c.settings.ui.todoHidden !== lastHidden) {

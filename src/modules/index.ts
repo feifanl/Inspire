@@ -2,6 +2,7 @@ import type { DashboardModule } from '../core/types';
 import { wallpaper } from './wallpaper';
 import { lifeclock } from './lifeclock';
 import { todo } from './todo';
+import { calendar } from './calendar';
 import { quote } from './quote';
 import { pins } from './pins';
 import { notes } from './notes';
@@ -11,4 +12,4 @@ import { help } from './help';
 import { tour } from './tour';
 
 // The only file touched when adding a feature: import the module and append it.
-export const modules: DashboardModule[] = [wallpaper, lifeclock, todo, quote, pins, notes, search, layout, help, tour];
+export const modules: DashboardModule[] = [wallpaper, lifeclock, todo, calendar, quote, pins, notes, search, layout, help, tour];
