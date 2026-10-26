@@ -2,7 +2,7 @@
 
 A calm, inspiring new-tab dashboard for Chrome.
 
-The extension replaces the default new tab with a **life clock**, **daily todos** (optionally synced with Trello), a **daily quote**, a **Pinterest-style pins wall**, and **sticky notes**.
+The extension replaces the default new tab with a **life clock**, **daily todos** (optionally synced with Trello), a **Google Calendar day view**, a **daily quote**, a **Pinterest-style pins wall**, and **sticky notes**.
 
 ![Example of extension in action](public/imgs/image.png)
 
@@ -12,6 +12,7 @@ The extension replaces the default new tab with a **life clock**, **daily todos*
 
 - **Life clock** - see how much of your current day, week, month, year, decade, and life are left as progress bars and grids. Zoom in and out to change views. Meant as a reminder that life is fleeting, not as something to get depressed about.
 - **Todos** - a per-day task list in the left sidebar. Works fully offline, and can optionally two-way sync with a Trello board.
+- **Calendar** - paste a Google Calendar secret iCal link and the sidebar gets a **Today** tab next to your tasks: a day grid with a now-line, arrows to step through days, and one color per calendar. Refreshes in the background every 15 minutes, so the new tab never waits on it.
 - **Quote** - a daily quote from [ZenQuotes](https://zenquotes.io) with included offline quotes (philosophy, self-help, morality). Write your own quotes too — mixed into the rotation, or shown on their own.
 - **Pins wall** - a full Pinterest-style pins board of your own images, grouped into boards. Right-click any image on the web to add it. Auto-rotate boards or slowly drift through pins with panorama scroll.
 - **Notes** - add sticky notes so you can jot down any idea; open on a full-screen interactive board.
@@ -73,7 +74,7 @@ npm run typecheck  # tsc --noEmit
 npm run icons      # regenerate PNG icons from source
 ```
 
-The dev server serves `newtab.html`, but Chrome-only APIs (`chrome.storage`, context menus) are guarded, so most of the UI works in a plain browser tab. Load `dist/` as an unpacked extension to use and view the full feature set.
+The dev server serves `newtab.html`, but Chrome-only APIs (`chrome.storage`, context menus) are guarded, so most of the UI works in a plain browser tab. Google Calendar feeds go through a `/gcal` dev proxy, since a plain page can't read them directly. Load `dist/` as an unpacked extension to use and view the full feature set.
 
 ---
 
@@ -84,9 +85,9 @@ public/            manifest.json, icons, fonts (copied verbatim into dist/)
 newtab.html        new-tab entry
 src/
   main.ts          boot + zoom controller
-  background.ts    service worker (right-click "Add image to pins board")
+  background.ts    service worker (right-click "Add image to pins board", calendar refresh)
   core/            DOM, events bus, storage, settings, module registry
-  modules/         lifeclock, todo, notes, pins, quote, search, wallpaper, layout, help
+  modules/         lifeclock, todo, calendar, notes, pins, quote, search, wallpaper, layout, help
   ui/              settings panel
   styles/          tokens, base, fonts
 scripts/           icon + font generators
@@ -98,6 +99,6 @@ Modules self-register in [src/modules/index.ts](src/modules/index.ts) and mount 
 
 ## Privacy
 
-All data is stored in `chrome.storage.local` on your machine. The only outbound requests are **Trello** (*if* you enable sync and enter credentials), **ZenQuotes** (*if* the daily-quote fetch is on), and **Google Photos** (*if* you link a shared album; sent without your Google sign-in).
+All data is stored in `chrome.storage.local` on your machine. The only outbound requests are **Trello** (*if* you enable sync and enter credentials), **ZenQuotes** (*if* the daily-quote fetch is on), **Google Photos** (*if* you link a shared album), and **Google Calendar** (*if* you paste a secret iCal link; read-only, refreshed every 15 minutes). Google requests are sent without your Google sign-in, and access to each Google site is only requested when you press its Sync button. Full policy: [site/index.html](site/index.html).
 
-With both off, the dashboard is still fully functional, with bundled fonts, a solid wallpaper color, and a bundled quote pool. The right-click "Add image to pins board" feature reads only the URL of the image you click; no page content is collected or uploaded.
+With all of these off, the dashboard is still fully functional, with bundled fonts, a solid wallpaper color, and a bundled quote pool. The right-click "Add image to pins board" feature reads only the URL of the image you click; no page content is collected or uploaded.

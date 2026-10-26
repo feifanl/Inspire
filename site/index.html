@@ -67,14 +67,14 @@
     <main>
       <h1>Privacy Policy</h1>
       <p class="updated">
-        Memento Mori Motivation Extension (New Tab) · Last updated 2026-07-12
+        Memento Mori Motivation Extension (New Tab) · Last updated 2026-10-26
       </p>
 
       <p>
         This extension replaces the browser's New Tab page with a personal
-        dashboard (to-do list, sticky notes, quotes, image pin boards, a
-        life-progress clock, and a search box). This policy explains what data it
-        handles.
+        dashboard (to-do list, a calendar day view, sticky notes, quotes, image
+        pin boards, a life-progress clock, wallpaper, and a search box). This
+        policy explains what data it handles.
       </p>
 
       <h2>Summary</h2>
@@ -84,14 +84,16 @@
           does not collect, receive, sell, or share any of your data.
         </li>
         <li>
-          Everything you create — settings, to-dos, sticky notes, pinned images,
-          and wallpaper — is stored <strong>locally on your device</strong> via
-          the browser's <code>chrome.storage.local</code> API.
+          Everything you create or connect — settings, to-dos, calendar events,
+          sticky notes, pinned images, and wallpaper — is stored
+          <strong>locally on your device</strong> via the browser's
+          <code>chrome.storage.local</code> API.
         </li>
         <li>
-          Data leaves your device only through <strong>two optional features you
+          Data leaves your device only through <strong>optional features you
           turn on yourself</strong>, and then only to the third-party service
-          that provides that feature.
+          that provides that feature. Google services are contacted without
+          your Google sign-in.
         </li>
       </ul>
 
@@ -112,6 +114,20 @@
           your Trello API key and token are stored locally so the extension can
           talk to Trello on your behalf. They are never sent to the developer or
           to anyone other than Trello.
+        </li>
+        <li>
+          <strong>Calendar link and events:</strong> if you connect Google
+          Calendar, the secret iCal address you paste is stored locally, along
+          with a copy of the events it returns (titles, times, locations, and
+          links back to Google Calendar) for roughly the past 60 and next 180
+          days. The secret address works like a password to your calendar; it is
+          only ever sent to Google Calendar.
+        </li>
+        <li>
+          <strong>Google Photos album:</strong> if you use a shared album as your
+          wallpaper, the album's share link is stored locally, along with the
+          album's photo list (image addresses, sizes, dates taken, and
+          descriptions) so photos can rotate without re-downloading the list.
         </li>
       </ul>
       <p>
@@ -135,8 +151,25 @@
           retrieve quotes; it sends none of your data. You can disable this and
           use bundled offline quotes.
         </li>
+        <li>
+          <strong>Google Calendar (calendar.google.com):</strong> Only if you
+          paste your own secret iCal address and press Sync, which asks the
+          browser for permission to read calendar.google.com. The extension
+          downloads that calendar feed directly, and refreshes it about every 15
+          minutes in the background, to show your events in the Today tab. It is
+          read-only: nothing is created, changed, or uploaded. Removing the
+          address stops all requests.
+        </li>
+        <li>
+          <strong>Google Photos (photos.google.com, photos.app.goo.gl):</strong>
+          Only if you choose a shared album as your wallpaper and press Sync,
+          which asks the browser for permission to read Google Photos. The
+          extension reads the album's photo list through its public share link
+          and loads the photos from Google's image servers. It is read-only:
+          nothing is uploaded or changed in your album.
+        </li>
       </ul>
-      <p>Neither service is contacted unless you enable the corresponding feature.</p>
+      <p>None of these services is contacted unless you enable the corresponding feature.</p>
 
       <h2>What the developer does not do</h2>
       <ul>
